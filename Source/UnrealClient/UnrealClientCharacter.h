@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "Voxel_one.h"
 #include "UnrealClientCharacter.generated.h"
 
 class UInputComponent;
@@ -43,6 +44,8 @@ public:
 protected:
 	virtual void BeginPlay();
 
+	virtual void Tick(float DeltaTime) override;
+
 public:
 		
 	/** Look Input Action */
@@ -67,5 +70,24 @@ public:
 	/** Returns FirstPersonCameraComponent subobject **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
+private:
+	//AVoxel_one* SpawnedVoxel;
+	TArray<AVoxel_one*> SpawnedVoxels;  
+	//int32 GridSize = 15; 
+	int32 GridSizeY = 23; 
+	int32 GridSizeZ = 15;
+
+
+
+	//float VoxelSpacing = 50.0f; 
+	float DistanceFromCamera = 200.0f;
+	//FVector VoxelSize = FVector(100.0f, 100.0f, 100.0f); 
+	FVector VoxelSize;
+	int32 NumX;
+	int32 NumY;
+	int32 NumZ;
+
+	// Set default voxel size
+	//VoxelSize = FVector(14.58125f, 14.9976f, 15.2614f);
 };
 

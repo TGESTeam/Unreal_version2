@@ -45,7 +45,7 @@ AUnrealClientCharacter::AUnrealClientCharacter()
 	NumZ = 101;
 
 	FVector Dimensions = FVector(1633.0f, 1809.0f, 2014.0f);
-	VoxelSize = FVector(Dimensions.X / NumX, Dimensions.Y / NumY, Dimensions.Z / NumZ);
+	VoxelSize = FVector(Dimensions.X / NumX, Dimensions.Y / NumY, Dimensions.Z / NumZ); // 19.2117, 19.4516, 19.9405
 
 }
 
@@ -59,7 +59,9 @@ void AUnrealClientCharacter::BeginPlay()
 
 	UE_LOG(LogTemplateCharacter, Log, TEXT("here5"));
 
+
 	// 복셀 간의 간격을 복셀 크기에 맞게 설정
+	float VoxelSpacingX = VoxelSize.X;
 	float VoxelSpacingY = VoxelSize.Y;
 	float VoxelSpacingZ = VoxelSize.Z;
 
@@ -72,32 +74,94 @@ void AUnrealClientCharacter::BeginPlay()
 	FVector StartLocation = CameraLocation + ForwardVector * DistanceFromCamera;
 
 	// 복셀 생성 및 배열에 저장
-	for (int32 i = 0; i < GridSizeY; ++i)
+	for (int32 x = 0; x < GridSizeX; ++x)
 	{
-		for (int32 j = 0; j < GridSizeZ; ++j)
+		for (int32 y = 0; y < GridSizeY; ++y)
 		{
-			// Y와 Z 축에 대해 그리드 위치 계산
-			FVector VoxelLocation = StartLocation + FVector(0.0f, i * VoxelSpacingY, j * VoxelSpacingZ)
-				- FVector(0.0f, (GridSizeY - 1) * VoxelSpacingY / 2.0f, (GridSizeZ - 1) * VoxelSpacingZ / 2.0f);
-
-			// Voxel 스폰 파라미터 설정
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = this;
-			SpawnParams.Instigator = GetInstigator();
-
-			// AVoxel_one 클래스를 직접 스폰
-			AVoxel_one* SpawnedVoxel = GetWorld()->SpawnActor<AVoxel_one>(AVoxel_one::StaticClass(), VoxelLocation, FRotator::ZeroRotator, SpawnParams);
-
-			if (SpawnedVoxel)
+			for (int32 z = 0; z < GridSizeZ; ++z)
 			{
-				SpawnedVoxels.Add(SpawnedVoxel);  // 배열에 추가
-			}
-			else
-			{
-				UE_LOG(LogTemplateCharacter, Error, TEXT("Failed to spawn Voxel at location: %s"), *VoxelLocation.ToString());
+				// X, Y, Z 축에 대해 그리드 위치 계산
+				FVector VoxelLocation = StartLocation
+					+ FVector(x * VoxelSpacingX, y * VoxelSpacingY, z * VoxelSpacingZ)
+					- FVector((GridSizeX - 1) * VoxelSpacingX / 2.0f, (GridSizeY - 1) * VoxelSpacingY / 2.0f, (GridSizeZ - 1) * VoxelSpacingZ / 2.0f);
+
+				// Voxel 스폰 파라미터 설정
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.Owner = this;
+				SpawnParams.Instigator = GetInstigator();
+
+				// AVoxel_one 클래스를 직접 스폰
+				AVoxel_one* SpawnedVoxel = GetWorld()->SpawnActor<AVoxel_one>(AVoxel_one::StaticClass(), VoxelLocation, FRotator::ZeroRotator, SpawnParams);
+
+				if (SpawnedVoxel)
+				{
+					SpawnedVoxels.Add(SpawnedVoxel);  // 배열에 추가
+				}
+				else
+				{
+					UE_LOG(LogTemplateCharacter, Error, TEXT("Failed to spawn Voxel at location: %s"), *VoxelLocation.ToString());
+				}
 			}
 		}
 	}
+
+
+	//// 복셀 간의 간격을 복셀 크기에 맞게 설정
+	//float VoxelSpacingY = VoxelSize.Y;
+	//float VoxelSpacingZ = VoxelSize.Z;
+
+	//// 카메라의 위치와 방향 가져오기
+	//FVector CameraLocation = GetFirstPersonCameraComponent()->GetComponentLocation();
+	//FRotator CameraRotation = GetFirstPersonCameraComponent()->GetComponentRotation();
+	//FVector ForwardVector = CameraRotation.Vector();
+
+	//// CameraLocation 출력
+	//UE_LOG(LogTemp, Log, TEXT("CameraLocation: %s"), *CameraLocation.ToString());
+
+	//// CameraRotation 출력
+	//UE_LOG(LogTemp, Log, TEXT("CameraRotation: Pitch: %f, Yaw: %f, Roll: %f"), CameraRotation.Pitch, CameraRotation.Yaw, CameraRotation.Roll);
+
+	//// ForwardVector 출력
+	//UE_LOG(LogTemp, Log, TEXT("ForwardVector: %s"), *ForwardVector.ToString());
+
+	//// 그리드의 중앙이 카메라 앞에 오도록 위치 설정
+	//FVector StartLocation = CameraLocation + ForwardVector * DistanceFromCamera;
+
+	//UE_LOG(LogTemp, Log, TEXT("StartLocation: %s"), *StartLocation.ToString());
+
+	//// 복셀 생성 및 배열에 저장
+	//for (int32 i = 0; i < GridSizeY; ++i)
+	//{
+	//	for (int32 j = 0; j < GridSizeZ; ++j)
+	//	{
+	//		// Y와 Z 축에 대해 그리드 위치 계산
+	//		FVector VoxelLocation = StartLocation + FVector(0.0f, i * VoxelSpacingY, j * VoxelSpacingZ)
+	//			- FVector(0.0f, (GridSizeY - 1) * VoxelSpacingY / 2.0f, (GridSizeZ - 1) * VoxelSpacingZ / 2.0f);
+
+	//		// Voxel 스폰 파라미터 설정
+	//		FActorSpawnParameters SpawnParams;
+	//		SpawnParams.Owner = this;
+	//		SpawnParams.Instigator = GetInstigator();
+
+	//		// AVoxel_one 클래스를 직접 스폰
+	//		AVoxel_one* SpawnedVoxel = GetWorld()->SpawnActor<AVoxel_one>(AVoxel_one::StaticClass(), VoxelLocation, FRotator::ZeroRotator, SpawnParams);
+
+	//		if (SpawnedVoxel)
+	//		{
+	//			SpawnedVoxels.Add(SpawnedVoxel);  // 배열에 추가
+	//		}
+	//		else
+	//		{
+	//			UE_LOG(LogTemplateCharacter, Error, TEXT("Failed to spawn Voxel at location: %s"), *VoxelLocation.ToString());
+	//		}
+	//	}
+	//}
+
+
+
+
+
+
 
 	//// 복셀 간의 간격을 복셀 크기에 맞게 설정
 	//float VoxelSpacingY = VoxelSize.Y;
@@ -170,6 +234,7 @@ void AUnrealClientCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	// 복셀 간의 간격을 복셀 크기에 맞게 설정
+	float VoxelSpacingX = VoxelSize.X;
 	float VoxelSpacingY = VoxelSize.Y;
 	float VoxelSpacingZ = VoxelSize.Z;
 
@@ -183,24 +248,66 @@ void AUnrealClientCharacter::Tick(float DeltaTime)
 	FVector GridCenterLocation = CameraLocation + CameraForward * DistanceFromCamera;
 
 	// 모든 복셀의 위치 업데이트
-	for (int32 i = 0; i < GridSizeY; ++i)
+	for (int32 x = 0; x < GridSizeX; ++x)
 	{
-		for (int32 j = 0; j < GridSizeZ; ++j)
+		for (int32 y = 0; y < GridSizeY; ++y)
 		{
-			int32 Index = i * GridSizeZ + j;
-			if (SpawnedVoxels.IsValidIndex(Index) && SpawnedVoxels[Index])
+			for (int32 z = 0; z < GridSizeZ; ++z)
 			{
-				// Y와 Z 축에 대해 그리드 위치 계산
-				FVector VoxelLocation = GridCenterLocation
-					+ (CameraRight * (i - GridSizeY / 2) * VoxelSpacingY)
-					+ (CameraUp * (j - GridSizeZ / 2) * VoxelSpacingZ);
+				int32 Index = x * GridSizeY * GridSizeZ + y * GridSizeZ + z;
+				if (SpawnedVoxels.IsValidIndex(Index) && SpawnedVoxels[Index])
+				{
+					// X, Y, Z 축에 대해 그리드 위치 계산
+					FVector VoxelLocation = GridCenterLocation
+						+ (CameraRight * (x - GridSizeX / 2) * VoxelSpacingX)
+						+ (CameraUp * (z - GridSizeZ / 2) * VoxelSpacingZ)
+						+ (CameraForward * (y - GridSizeY / 2) * VoxelSpacingY);
 
-				// 복셀 위치 및 회전 설정 (회전은 카메라를 바라보도록 설정)
-				SpawnedVoxels[Index]->SetActorLocation(VoxelLocation);
-				SpawnedVoxels[Index]->SetActorRotation(FRotationMatrix::MakeFromX(CameraForward).Rotator());
+					// 복셀 위치 및 회전 설정 (회전은 카메라를 바라보도록 설정)
+					SpawnedVoxels[Index]->SetActorLocation(VoxelLocation);
+					SpawnedVoxels[Index]->SetActorRotation(FRotationMatrix::MakeFromX(CameraForward).Rotator());
+				}
 			}
 		}
 	}
+
+	//// 복셀 간의 간격을 복셀 크기에 맞게 설정
+	//float VoxelSpacingY = VoxelSize.Y;
+	//float VoxelSpacingZ = VoxelSize.Z;
+
+	//// 카메라의 위치와 방향 가져오기
+	//FVector CameraLocation = GetFirstPersonCameraComponent()->GetComponentLocation();
+	//FVector CameraForward = GetFirstPersonCameraComponent()->GetForwardVector();
+	//FVector CameraRight = GetFirstPersonCameraComponent()->GetRightVector();
+	//FVector CameraUp = GetFirstPersonCameraComponent()->GetUpVector();
+
+	//// 그리드의 중앙이 카메라 앞에 오도록 위치 설정
+	//FVector GridCenterLocation = CameraLocation + CameraForward * DistanceFromCamera;
+
+	//// 모든 복셀의 위치 업데이트
+	//for (int32 i = 0; i < GridSizeY; ++i)
+	//{
+	//	for (int32 j = 0; j < GridSizeZ; ++j)
+	//	{
+	//		int32 Index = i * GridSizeZ + j;
+	//		if (SpawnedVoxels.IsValidIndex(Index) && SpawnedVoxels[Index])
+	//		{
+	//			// Y와 Z 축에 대해 그리드 위치 계산
+	//			FVector VoxelLocation = GridCenterLocation
+	//				+ (CameraRight * (i - GridSizeY / 2) * VoxelSpacingY)
+	//				+ (CameraUp * (j - GridSizeZ / 2) * VoxelSpacingZ);
+
+	//			// 복셀 위치 및 회전 설정 (회전은 카메라를 바라보도록 설정)
+	//			SpawnedVoxels[Index]->SetActorLocation(VoxelLocation);
+	//			SpawnedVoxels[Index]->SetActorRotation(FRotationMatrix::MakeFromX(CameraForward).Rotator());
+	//		}
+	//	}
+	//}
+
+
+
+
+
 
 	//// 복셀 간의 간격을 복셀 크기에 맞게 설정
 	//float VoxelSpacingY = VoxelSize.Y;

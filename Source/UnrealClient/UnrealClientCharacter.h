@@ -74,8 +74,15 @@ private:
 	//AVoxel_one* SpawnedVoxel;
 	TArray<AVoxel_one*> SpawnedVoxels;  
 	//int32 GridSize = 15; 
-	int32 GridSizeY = 23; 
-	int32 GridSizeZ = 15;
+
+	//int32 GridSizeY = 23;
+	//int32 GridSizeZ = 15;
+
+
+	//3D 
+	int32 GridSizeX = 23;
+	int32 GridSizeY = 10; 
+	int32 GridSizeZ = 7;
 
 
 

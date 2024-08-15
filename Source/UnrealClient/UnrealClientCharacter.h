@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "Voxel_one.h"
+#include "Voxel_Color.h"
 #include "UnrealClientCharacter.generated.h"
 
 class UInputComponent;
@@ -72,7 +73,8 @@ public:
 
 private:
 	//AVoxel_one* SpawnedVoxel;
-	TArray<AVoxel_one*> SpawnedVoxels;  
+	//TArray<AVoxel_one*> SpawnedVoxels;
+	TArray<AVoxel_Color*> SpawnedVoxels;
 	//int32 GridSize = 15; 
 
 	//int32 GridSizeY = 23;
@@ -80,19 +82,29 @@ private:
 
 
 	//3D 
-	int32 GridSizeX = 23;
+	/*int32 GridSizeX = 23;
 	int32 GridSizeY = 10; 
-	int32 GridSizeZ = 7;
+	int32 GridSizeZ = 7;*/
 
+	int32 GridSizeX = 10;
+	int32 GridSizeY = 10;
+	int32 GridSizeZ = 5;
 
 
 	//float VoxelSpacing = 50.0f; 
-	float DistanceFromCamera = 200.0f;
+	float DistanceFromCamera = 50.0f;
 	//FVector VoxelSize = FVector(100.0f, 100.0f, 100.0f); 
 	FVector VoxelSize;
 	int32 NumX;
 	int32 NumY;
 	int32 NumZ;
+
+	FVector GridStartLocation;
+
+	int32 CenterIndexX;
+	int32 CenterIndexY;
+
+	float InitialZLocation; // 초기 Z축 위치를 저장할 변수
 
 	// Set default voxel size
 	//VoxelSize = FVector(14.58125f, 14.9976f, 15.2614f);

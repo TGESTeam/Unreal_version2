@@ -4,10 +4,10 @@
 #include "Voxel_Color.h"
 
 // ---------- PV 데이터 설정 (순서는 KindPV의 값과 동일하다) ---------
-const float AVoxel_Color::DENSITY_MIN[AVoxel_Color::KIND_PV_LENGTH] = \
+const float AVoxel_Color::DENSITY_MIN[KIND_PV_LENGTH] = \
 {-100.333333f, 25.3758f, 50.5097f, -30.32f, 77.7f, 0.0f, 5.0f};
 
-const float AVoxel_Color::DENSITY_MAX[AVoxel_Color::KIND_PV_LENGTH] = \
+const float AVoxel_Color::DENSITY_MAX[KIND_PV_LENGTH] = \
 {2499.99999f, 75.53f, 990.1f, 1.0f, 150.333f, 15.0f, 10.22523f};
 
 // Sets default values
@@ -120,13 +120,11 @@ void AVoxel_Color::ChangeColor() {
 
 // 레드 ~ 화이트 범위의 Voxel 색깔 변경
 void AVoxel_Color::SetColorWhiteToRed(double& densityPersent, bool reverse) {
-
     if (reverse) { // Red ~ White
-        DynamicMaterial->SetVectorParameterValue(FName("ColorParam"), FLinearColor(1.0f, (1.0f - densityPersent), (1.0f - densityPersent), 1.0f));
+        densityPersent = (1.0f - densityPersent);
     }
-    else { // White ~ Red
-        DynamicMaterial->SetVectorParameterValue(FName("ColorParam"), FLinearColor(1.0f, densityPersent, densityPersent, 1.0f));
-    }
+
+    DynamicMaterial->SetVectorParameterValue(FName("ColorParam"), FLinearColor(1.0f, densityPersent, densityPersent, 1.0f));
 
 }
 
@@ -152,8 +150,10 @@ void AVoxel_Color::SetColorBlueToRed(double& densityPersent, bool reverse) {
 // 화이트 ~ 블랙 범위의 Voxel 색깔 변경 (역 가능)
 void AVoxel_Color::SetColorWhiteToBlack(double& densityPersent, bool reverse) {
     if (reverse) {
-        densityPersent = 1.0f - densityPersent;
+        densityPersent = (1.0f - densityPersent);
     }
+
+    DynamicMaterial->SetVectorParameterValue(FName("ColorParam"), FLinearColor((1.0f - densityPersent), (1.0f - densityPersent), (1.0f - densityPersent), 1.0f));
 
 
 }

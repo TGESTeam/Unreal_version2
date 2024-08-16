@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "GameplayTagContainer.h"
 #include "GameplayTagsManager.h"
+#include "UnrealClientEnum.h"
 #include "Voxel_Color.generated.h"
 
 UCLASS()
@@ -20,18 +21,7 @@ public:
 public:
 	FVector Dimensions = FVector(1633.0f, 1809.0f, 2014.0f);
 
-	// PV의 종류를 확인할 수 있는 enum
-	// DENSITY_MIN과 DENSITY_MAX에 접근가능
-	enum KindPV {
-		O2,
-		CO2,
-		CO,
-		TEMP,
-		VELOCITY,
-		ACCEL,
-		FUEL,
-		KIND_PV_LENGTH // KindPV의 길이를 나타낸 것 (추가 하려면 이전 멤버에 추가해야함)
-	};
+	
 
 	// PV에 따른 DENSSITY의 최소, 최댓값
 	// 순서는 KindPV의 값과 동일하다

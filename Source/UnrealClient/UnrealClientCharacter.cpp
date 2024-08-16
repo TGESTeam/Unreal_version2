@@ -46,7 +46,7 @@ AUnrealClientCharacter::AUnrealClientCharacter()
 
 	FVector Dimensions = FVector(1633.0f, 1809.0f, 2014.0f);
 	VoxelSize = FVector(Dimensions.X / NumX, Dimensions.Y / NumY, Dimensions.Z / NumZ); // 19.2117, 19.4516, 19.9405
-
+	
 	//InitialZLocation = GetActorLocation().Z; // Z축 초기값을 0.0으로 설정
 	//InitialZLocation = 98.337502; // Z축 초기값을 0.0으로 설정
 }
@@ -122,7 +122,14 @@ void AUnrealClientCharacter::BeginPlay()
 	// 그리드 시작 위치 저장
 	this->GridStartLocation = StartLocation;
 
+
+	//Z축 설정
+	CenterIndexZ = FMath::FloorToInt((CameraLocation.Z - GridStartLocation.Z) / VoxelSpacingZ);
+	
+	//Z축 변화율로 했을 때
 	InitialZLocation = GetActorLocation().Z;
+
+
 
 
 	//// 카메라의 위치와 방향 가져오기
@@ -249,28 +256,32 @@ void AUnrealClientCharacter::Tick(float DeltaTime)
 	float VoxelSpacingY = VoxelSize.Y;
 	float VoxelSpacingZ = VoxelSize.Z;
 
-
 	// 현재 카메라 위치 가져오기
 	FVector CameraLocation = GetFirstPersonCameraComponent()->GetComponentLocation();
 
 	// 현재 플레이어의 X, Y 인덱스 계산 (중앙을 기준으로)
 	int32 IndexX = FMath::FloorToInt((CameraLocation.X - GridStartLocation.X) / VoxelSpacingX);
 	int32 IndexY = FMath::FloorToInt((CameraLocation.Y - GridStartLocation.Y) / VoxelSpacingY);
+	int32 IndexZ = FMath::FloorToInt((CameraLocation.Z - GridStartLocation.Z) / VoxelSpacingZ);
+	UE_LOG(LogTemplateCharacter, Log, TEXT("CenterIndexZ: %d, IndexZ : %d"), CenterIndexZ, IndexZ);
+
 	// 현재 캐릭터의 Z축 위치 가져오기
  // 현재 캐릭터의 Z축 위치 가져오기
 	float CurrentZLocation = GetActorLocation().Z;
 
 	// Z축의 변화량을 계산 (현재 Z축 위치 - 초기 Z축 위치)
 	float ZOffset = CurrentZLocation - InitialZLocation;
-	UE_LOG(LogTemplateCharacter, Log, TEXT("ZOffset: %f, CurrentZLocation : %f, InitialZLocation : %f"), ZOffset, CurrentZLocation, InitialZLocation);
+
+	/*UE_LOG(LogTemplateCharacter, Log, TEXT("ZOffset: %f, CurrentZLocation : %f, InitialZLocation : %f"), ZOffset, CurrentZLocation, InitialZLocation);*/
 	// X 또는 Y 축에서 중앙에서 벗어났거나 Z축이 변화된 경우 복셀 위치 업데이트
-	if (IndexX != CenterIndexX || IndexY != CenterIndexY || !FMath::IsNearlyZero(ZOffset))
+	if (IndexX != CenterIndexX || IndexY != CenterIndexY || IndexZ != CenterIndexZ)
 	{
 		// X, Y 이동에 따른 GridStartLocation 이동 계산 (Z는 변화시키지 않음)
 		FVector GridMovement = FVector(
 			(IndexX - CenterIndexX) * VoxelSpacingX,
 			(IndexY - CenterIndexY) * VoxelSpacingY,
-			0.0f  // Z축은 여기서 변화시키지 않음
+			(IndexZ - CenterIndexZ) * VoxelSpacingZ
+			//0.0f  // Z축은 여기서 변화시키지 않음
 		);
 		GridStartLocation += GridMovement;
 
@@ -289,8 +300,8 @@ void AUnrealClientCharacter::Tick(float DeltaTime)
 							y * VoxelSpacingY,
 							z * VoxelSpacingZ
 						);
-						// ZOffset을 반영하여 복셀 위치 설정
-						VoxelLocation.Z += ZOffset;
+						//// ZOffset을 반영하여 복셀 위치 설정
+						//VoxelLocation.Z += ZOffset;
 						SpawnedVoxels[Index]->SetActorLocation(VoxelLocation);
 					}
 				}
@@ -300,12 +311,68 @@ void AUnrealClientCharacter::Tick(float DeltaTime)
 		// 플레이어가 다시 X, Y 중앙에 위치하도록 인덱스 조정
 		IndexX = CenterIndexX;
 		IndexY = CenterIndexY;
+		IndexZ = CenterIndexZ;
 	}
 
 
 
 
 
+	// ------ z축을 하긴 했는데 변화율로 함 ----------
+	//// 현재 카메라 위치 가져오기
+	//FVector CameraLocation = GetFirstPersonCameraComponent()->GetComponentLocation();
+
+	//// 현재 플레이어의 X, Y 인덱스 계산 (중앙을 기준으로)
+	//int32 IndexX = FMath::FloorToInt((CameraLocation.X - GridStartLocation.X) / VoxelSpacingX);
+	//int32 IndexY = FMath::FloorToInt((CameraLocation.Y - GridStartLocation.Y) / VoxelSpacingY);
+	////int32 IndexZ = FMath::FloorToInt((CameraLocation.Z - GridStartLocation.Z) / VoxelSpacingZ);
+	//UE_LOG(LogTemplateCharacter, Log, TEXT("CenterIndexZ: %d"), CenterIndexZ);
+
+	//// 현재 캐릭터의 Z축 위치 가져오기
+ //// 현재 캐릭터의 Z축 위치 가져오기
+	//float CurrentZLocation = GetActorLocation().Z;
+
+	//// Z축의 변화량을 계산 (현재 Z축 위치 - 초기 Z축 위치)
+	//float ZOffset = CurrentZLocation - InitialZLocation;
+	///*UE_LOG(LogTemplateCharacter, Log, TEXT("ZOffset: %f, CurrentZLocation : %f, InitialZLocation : %f"), ZOffset, CurrentZLocation, InitialZLocation);*/
+	//// X 또는 Y 축에서 중앙에서 벗어났거나 Z축이 변화된 경우 복셀 위치 업데이트
+	//if (IndexX != CenterIndexX || IndexY != CenterIndexY || !FMath::IsNearlyZero(ZOffset))
+	//{
+	//	// X, Y 이동에 따른 GridStartLocation 이동 계산 (Z는 변화시키지 않음)
+	//	FVector GridMovement = FVector(
+	//		(IndexX - CenterIndexX) * VoxelSpacingX,
+	//		(IndexY - CenterIndexY) * VoxelSpacingY,
+	//		0.0f  // Z축은 여기서 변화시키지 않음
+	//	);
+	//	GridStartLocation += GridMovement;
+
+	//	// 모든 복셀 위치 업데이트
+	//	for (int32 x = 0; x < GridSizeX; ++x)
+	//	{
+	//		for (int32 y = 0; y < GridSizeY; ++y)
+	//		{
+	//			for (int32 z = 0; z < GridSizeZ; ++z)
+	//			{
+	//				int32 Index = x * GridSizeY * GridSizeZ + y * GridSizeZ + z;
+	//				if (SpawnedVoxels.IsValidIndex(Index) && SpawnedVoxels[Index])
+	//				{
+	//					FVector VoxelLocation = GridStartLocation + FVector(
+	//						x * VoxelSpacingX,
+	//						y * VoxelSpacingY,
+	//						z * VoxelSpacingZ
+	//					);
+	//					// ZOffset을 반영하여 복셀 위치 설정
+	//					VoxelLocation.Z += ZOffset;
+	//					SpawnedVoxels[Index]->SetActorLocation(VoxelLocation);
+	//				}
+	//			}
+	//		}
+	//	}
+
+	//	// 플레이어가 다시 X, Y 중앙에 위치하도록 인덱스 조정
+	//	IndexX = CenterIndexX;
+	//	IndexY = CenterIndexY;
+	//}
 
 
 
@@ -319,9 +386,13 @@ void AUnrealClientCharacter::Tick(float DeltaTime)
 
 
 
-	//4. 카메라위치/ 복셀 길이 만큼연산 
+
+
+
+
+
 	
-	//// --- 현재 플레이의 중앙 위치 인덱스 구하기 ---
+	//// --- 현재 플레이의 중앙 위치 인덱스 구하기 --- z축 안한 거
 	//FVector CameraLocation = GetFirstPersonCameraComponent()->GetComponentLocation();
 	//UE_LOG(LogTemplateCharacter, Log, TEXT("CameraLocation : %f, %f, %f"), CameraLocation.X, CameraLocation.Y, CameraLocation.Z);
 	//UE_LOG(LogTemplateCharacter, Log, TEXT("GridStartLocation : %f, %f, %f"), GridStartLocation.X, GridStartLocation.Y, GridStartLocation.Z);;
@@ -370,7 +441,7 @@ void AUnrealClientCharacter::Tick(float DeltaTime)
 
 
 
-	// -----  복셀이 사용자를 보는 3D
+	// -----  복셀이 사용자를 보는 3D --- 즉 카메라 
 
 	//// 복셀 간의 간격을 복셀 크기에 맞게 설정
 	//float VoxelSpacingX = VoxelSize.X;
@@ -414,7 +485,7 @@ void AUnrealClientCharacter::Tick(float DeltaTime)
 	//	}
 	//}
 
-	UE_LOG(LogTemplateCharacter, Log, TEXT("Player is at X index: %d, Y index: %d"), IndexX, IndexY);
+	//UE_LOG(LogTemplateCharacter, Log, TEXT("Player is at X index: %d, Y index: %d"), IndexX, IndexY);
 
 
 	for (AVoxel_Color* s: SpawnedVoxels) {

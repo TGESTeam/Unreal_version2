@@ -103,6 +103,7 @@ private:
 
 	int32 CenterIndexX;
 	int32 CenterIndexY;
+	int32 CenterIndexZ;
 
 	float InitialZLocation; // 초기 Z축 위치를 저장할 변수
 

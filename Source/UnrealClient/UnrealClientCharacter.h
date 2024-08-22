@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "Voxel_one.h"
+#include "Voxel_Color.h"
+#include "ProtocolLibrary.h"
 #include "UnrealClientCharacter.generated.h"
 
 class UInputComponent;
@@ -40,13 +42,6 @@ class AUnrealClientCharacter : public ACharacter
 	
 public:
 	AUnrealClientCharacter();
-
-protected:
-	virtual void BeginPlay();
-
-	virtual void Tick(float DeltaTime) override;
-
-public:
 		
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -59,35 +54,41 @@ protected:
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
 
-protected:
+	virtual void BeginPlay();
+
+	virtual void Tick(float DeltaTime) override;
+
 	// APawn interface
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
-	// End of APawn interface
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 
 public:
 	/** Returns Mesh1P subobject **/
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	/** Returns FirstPersonCameraComponent subobject **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
+	
 
 private:
-	//AVoxel_one* SpawnedVoxel;
-	TArray<AVoxel_one*> SpawnedVoxels;  
-	//int32 GridSize = 15; 
-	int32 GridSizeY = 23; 
-	int32 GridSizeZ = 15;
+	AProtocolLibrary* ProtocolLibraryInstance;
 
+	TArray<AVoxel_Color*> SpawnedVoxels;
+	int32 GridSizeX = 10;
+	int32 GridSizeY = 10;
+	int32 GridSizeZ = 5;
 
-
-	//float VoxelSpacing = 50.0f; 
-	float DistanceFromCamera = 200.0f;
-	//FVector VoxelSize = FVector(100.0f, 100.0f, 100.0f); 
 	FVector VoxelSize;
 	int32 NumX;
 	int32 NumY;
 	int32 NumZ;
 
-	// Set default voxel size
-	//VoxelSize = FVector(14.58125f, 14.9976f, 15.2614f);
+	FVector GridStartLocation;
+
+	int32 CenterIndexX;
+	int32 CenterIndexY;
+	int32 CenterIndexZ;
+
 };
 

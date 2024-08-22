@@ -20,6 +20,13 @@ enum KindPV {
 	KIND_PV_LENGTH UMETA(DisplayName = "KIND_PV_LENGTH") // KindPV의 길이를 나타낸 것 (추가 하려면 이전 멤버에 추가해야함)
 };
 
+UENUM(BlueprintType)
+enum FloorPlanPV {
+	X UMETA(DisplayName = "X"),
+	Y UMETA(DisplayName = "Y"),
+	Z UMETA(DisplayName = "Z")
+};
+
 /**
  * 
  */

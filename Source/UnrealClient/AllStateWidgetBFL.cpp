@@ -121,6 +121,69 @@ void UAllStateWidgetBFL::SetNowPVData(UObject* WorldContextObject, KindPV select
 
 }
 
+void UAllStateWidgetBFL::SetGraphViewStatePV(UObject* WorldContextObject, KindPV selectedPV)
+{
+
+	if (!WorldContextObject) return;
+
+	UWorld* World = WorldContextObject->GetWorld();
+	if (!World) return;
+
+	AProtocolLibrary* ProtocolLibraryInstance = AProtocolLibrary::GetInstance(World);
+
+	UE_LOG(LogTemp, Log, TEXT("----------------------> SetNowData Opened!!! [%d]"), (int32)selectedPV);
+
+	if (selectedPV == CO2)
+	{
+		if (ProtocolLibraryInstance->port8082Request.CO2 == true)
+			ProtocolLibraryInstance->port8082Request.CO2 = false;
+		else
+			ProtocolLibraryInstance->port8082Request.CO2 = true;
+	}
+	else if (selectedPV == O2)
+	{
+		if (ProtocolLibraryInstance->port8082Request.O2 == true)
+			ProtocolLibraryInstance->port8082Request.O2 = false;
+		else
+			ProtocolLibraryInstance->port8082Request.O2 = true;
+	}
+	else if (selectedPV == CO)
+	{
+		if (ProtocolLibraryInstance->port8082Request.CO == true)
+			ProtocolLibraryInstance->port8082Request.CO = false;
+		else
+			ProtocolLibraryInstance->port8082Request.CO = true;
+	}
+	else if (selectedPV == TEMP)
+	{
+		if (ProtocolLibraryInstance->port8082Request.TEMP == true)
+			ProtocolLibraryInstance->port8082Request.TEMP = false;
+		else
+			ProtocolLibraryInstance->port8082Request.TEMP = true;
+	}
+	else if (selectedPV == VELOCITY)
+	{
+		if (ProtocolLibraryInstance->port8082Request.VELOCITY == true)
+			ProtocolLibraryInstance->port8082Request.VELOCITY = false;
+		else
+			ProtocolLibraryInstance->port8082Request.VELOCITY = true;
+	}
+	else if (selectedPV == ACCEL)
+	{
+		if (ProtocolLibraryInstance->port8082Request.ACCEL == true)
+			ProtocolLibraryInstance->port8082Request.ACCEL = false;
+		else
+			ProtocolLibraryInstance->port8082Request.ACCEL = true;
+	}
+	else if (selectedPV == FUEL)
+	{
+		if (ProtocolLibraryInstance->port8082Request.FUEL == true)
+			ProtocolLibraryInstance->port8082Request.FUEL = false;
+		else
+			ProtocolLibraryInstance->port8082Request.FUEL = true;
+	}
+}
+
 void UAllStateWidgetBFL::SetNowFloorPlanPV(UObject* WorldContextObject, FloorPlanPV selectedPV)
 {
 	if (!WorldContextObject) return;
@@ -206,4 +269,27 @@ void UAllStateWidgetBFL::UpdateTextBlock(UObject* WorldContextObject, UTextBlock
 
 	}
 	UE_LOG(LogTemp, Log, TEXT("----> click UpdateTextBlock"));
+}
+
+void UAllStateWidgetBFL::SetImageColor(UImage* Image, const FLinearColor& NewColor)
+{
+	if (Image)
+	{
+		// Image 위젯의 Brush Tint Color를 변경
+		Image->SetColorAndOpacity(NewColor);
+	}
+}
+
+void UAllStateWidgetBFL::SetImagesColor(const TArray<UImage*>& Images)
+{
+	FLinearColor RedColor = FLinearColor::Red;  // 빨간색 정의
+
+	// 배열에 있는 모든 Image 위젯의 색상을 빨간색으로 변경
+	for (UImage* Image : Images)
+	{
+		if (Image)
+		{
+			Image->SetColorAndOpacity(RedColor);
+		}
+	}
 }

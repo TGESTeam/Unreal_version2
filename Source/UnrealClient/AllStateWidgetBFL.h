@@ -7,6 +7,7 @@
 #include "UnrealClientEnum.h"
 #include "Components/TextBlock.h" 
 #include "ProtocolLibrary.h"
+#include "Components/Image.h"
 #include "AllStateWidgetBFL.generated.h"
 
 /**
@@ -17,11 +18,15 @@ class UNREALCLIENT_API UAllStateWidgetBFL : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
-	UFUNCTION(Blueprintcallable, Category="SetNowPVData")
+	UFUNCTION(Blueprintcallable, Category="SetNowPVData")// Port8081
 	//static void SetNowPVData(KindPV selectedPV);
 	static void SetNowPVData(UObject* WorldContextObject, KindPV selectedPV);
 
-	UFUNCTION(Blueprintcallable, Category = "SetNowFloorPlanPV")
+	UFUNCTION(Blueprintcallable, Category = "SetGraphViewStatePV") // Port8082
+	//static void SetNowPVData(KindPV selectedPV);
+	static void SetGraphViewStatePV(UObject* WorldContextObject, KindPV selectedPV);
+
+	UFUNCTION(Blueprintcallable, Category = "SetNowFloorPlanPV") // Port8082
 	//static void SetNowPVData(KindPV selectedPV);
 	static void SetNowFloorPlanPV(UObject* WorldContextObject, FloorPlanPV selectedPV);
 	
@@ -39,4 +44,11 @@ class UNREALCLIENT_API UAllStateWidgetBFL : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintCallable, Category = "ValueOperations")
 	static void UpdateTextBlock(UObject* WorldContextObject, UTextBlock* TextBlock, int32 CurrentValue);
 
+	// Image 위젯의 색상을 변경하는 함수
+	UFUNCTION(BlueprintCallable, Category = "WidgetOperations")
+	static void SetImageColor(UImage* Image, const FLinearColor& NewColor);
+	
+	// 여러 Image 위젯의 색상을 빨간색으로 변경하는 함수
+	UFUNCTION(BlueprintCallable, Category = "WidgetOperations")
+	static void SetImagesColor(const TArray<UImage*>& Images);
 };

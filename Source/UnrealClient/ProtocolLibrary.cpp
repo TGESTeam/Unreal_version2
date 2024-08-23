@@ -210,11 +210,26 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 			FString Message; // 	 = TEXT("Message to Server 2");
 			//KI
 			Message += "KI";
-			for (size_t i = 0; i < 7; i++)
+			for (size_t i = 0; i < 7; i++) // 중복 가능
 			{
-				//누르는 버튼으로 0과1주기
-				Message += FString::Printf(TEXT("0"));
+				FString ValueToAdd = TEXT("0");
+
+				// port8081Request의 각 멤버를 순차적으로 검사
+				switch (i)
+				{
+					case 0: ValueToAdd = port8082Request.CO2 ? TEXT("1") : TEXT("0"); break;
+					case 1: ValueToAdd = port8082Request.O2 ? TEXT("1") : TEXT("0"); break;
+					case 2: ValueToAdd = port8082Request.CO ? TEXT("1") : TEXT("0"); break;
+					case 3: ValueToAdd = port8082Request.TEMP ? TEXT("1") : TEXT("0"); break;
+					case 4: ValueToAdd = port8082Request.VELOCITY ? TEXT("1") : TEXT("0"); break;
+					case 5: ValueToAdd = port8082Request.ACCEL ? TEXT("1") : TEXT("0"); break;
+					case 6: ValueToAdd = port8082Request.FUEL ? TEXT("1") : TEXT("0"); break;
+					default: break;
+				}
+				Message += ValueToAdd;
 			}
+
+
 			//LO
 			Message += "LO";
 			Message += FString::Printf(TEXT("%lf"), PlayerLocation.X) + "," \

@@ -61,9 +61,17 @@ public:
 
 	//Port8082 Request
 	int32 PredictTime = 0;
+	struct Port8082_request { // 다중 선택 가능
+		bool CO2 = false;
+		bool O2 = false;
+		bool CO = false;
+		bool TEMP = false;
+		bool VELOCITY = false;
+		bool ACCEL = false;
+		bool FUEL = false;
+	};
 
-
-
+	Port8082_request port8082Request;
 
 
 

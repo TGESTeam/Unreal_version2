@@ -277,6 +277,7 @@ void UAllStateWidgetBFL::SetImageColor(UImage* Image, const FLinearColor& NewCol
 	{
 		// Image 위젯의 Brush Tint Color를 변경
 		Image->SetColorAndOpacity(NewColor);
+		UE_LOG(LogTemp, Log, TEXT("----> ho"));
 	}
 }
 

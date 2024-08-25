@@ -116,7 +116,7 @@ public:
 
 	FVector PlayerLocation; // LO
 
-	FDateTime CurrentTime; // TI
+	FTimespan CurrentTime; // TI
 
 private:
 

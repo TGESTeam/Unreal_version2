@@ -133,6 +133,11 @@ void AUnrealClientCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	AProtocolLibrary::DestroyInstance();
 }
 
+AProtocolLibrary* AUnrealClientCharacter::GetProtocolLibrary()
+{
+	return ProtocolLibraryInstance;
+}
+
 
 //////////////////////////////////////////////////////////////////////////// Input
 

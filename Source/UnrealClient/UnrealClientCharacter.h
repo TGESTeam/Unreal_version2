@@ -69,7 +69,7 @@ public:
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	/** Returns FirstPersonCameraComponent subobject **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
-	
+	AProtocolLibrary* GetProtocolLibrary();
 
 private:
 	AProtocolLibrary* ProtocolLibraryInstance;

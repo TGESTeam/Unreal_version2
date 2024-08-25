@@ -182,7 +182,6 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 				Message += ValueToAdd;
 			}
 
-
 			//LO
 			Message += "LO";
 			Message += FString::Printf(TEXT("%lf"), PlayerLocation.X) + "," \
@@ -190,9 +189,13 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 				+ FString::Printf(TEXT("%lf"), PlayerLocation.Z);
 			//TI
 			Message += "TI";
-			CurrentTime = FDateTime::UtcNow();
-			CurrentTime = CurrentTime + FTimespan::FromSeconds(0.1);
-			Message += *CurrentTime.ToString();
+			FTimespan NewTime = CurrentTime + FTimespan::FromSeconds(0.1);
+			int32 Hours = NewTime.GetHours();
+			int32 Minutes = NewTime.GetMinutes();
+			int32 Seconds = NewTime.GetSeconds();
+			int32 Milliseconds = static_cast<int32>(NewTime.GetTotalMilliseconds()) % 1000;
+			FString TimeString = FString::Printf(TEXT("%02d:%02d:%02d.%03d"), Hours, Minutes, Seconds, Milliseconds);
+			Message += *TimeString;
 
 			const TCHAR* SerializedChar = *Message;
 			int32 Size = FCString::Strlen(SerializedChar) + 1;
@@ -237,15 +240,18 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 				+ FString::Printf(TEXT("%lf"), PlayerLocation.Z);
 			//TN
 			Message += "TN";
-			CurrentTime = FDateTime::UtcNow();
-			Message += *CurrentTime.ToString();
+			FTimespan GrpahNewTime = CurrentTime + FTimespan::FromSeconds((double) PredictTime);
+			int32 Hours = GrpahNewTime.GetHours();
+			int32 Minutes = GrpahNewTime.GetMinutes();
+			int32 Seconds = GrpahNewTime.GetSeconds();
+			int32 Milliseconds = static_cast<int32>(GrpahNewTime.GetTotalMilliseconds()) % 1000;
+			FString TimeString = FString::Printf(TEXT("%02d:%02d:%02d.%03d"), Hours, Minutes, Seconds, Milliseconds);
+			Message += *TimeString;
 
 			//TF -> 미래범위
 			//UI에서 선택된 거 없으면 0 있으면 버튼의 값 들고와야됨.
 			Message += "TF";
 			Message += FString::Printf(TEXT("%d"), PredictTime);
-
-
 
 
 			const TCHAR* SerializedChar = *Message;
@@ -284,8 +290,13 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 
 			//TN
 			Message += "TN";
-			CurrentTime = FDateTime::UtcNow();
-			Message += *CurrentTime.ToString();
+			int32 Hours = CurrentTime.GetHours();
+			int32 Minutes = CurrentTime.GetMinutes();
+			int32 Seconds = CurrentTime.GetSeconds();
+			int32 Milliseconds = static_cast<int32>(CurrentTime.GetTotalMilliseconds()) % 1000;
+			FString TimeString = FString::Printf(TEXT("%02d:%02d:%02d.%03d"), Hours, Minutes, Seconds, Milliseconds);
+			Message += *TimeString;
+
 			//AX 
 			Message += "AX";
 			for (size_t i = 0; i < 3; i++)

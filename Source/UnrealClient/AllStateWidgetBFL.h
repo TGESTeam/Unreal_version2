@@ -8,6 +8,8 @@
 #include "Components/TextBlock.h" 
 #include "ProtocolLibrary.h"
 #include "Components/Image.h"
+#include "ProtocolLibrary.h"
+#include "UnrealClientCharacter.h"
 #include "AllStateWidgetBFL.generated.h"
 
 /**
@@ -51,4 +53,21 @@ class UNREALCLIENT_API UAllStateWidgetBFL : public UBlueprintFunctionLibrary
 	// 여러 Image 위젯의 색상을 빨간색으로 변경하는 함수
 	UFUNCTION(BlueprintCallable, Category = "WidgetOperations")
 	static void SetImagesColor(const TArray<UImage*>& Images);
+
+
+	UFUNCTION(BlueprintCallable, Category = "WidgetOperations") //현재 시간 업데이트
+	static void UpdateTimeTextBlock(AUnrealClientCharacter* PlayerCharacter, UObject* WorldContextObject, UTextBlock* TextBlock);
+
+	UFUNCTION(BlueprintCallable, Category = "WidgetOperations") // UmgCurrentTime 초기화
+	static void InitializeTime();
+
+	UFUNCTION(BlueprintCallable, Category = "WidgetOperations") // 10s 더하기
+	static void AddSecondsToCurrentTimePlus(int32 Seconds);
+
+	UFUNCTION(BlueprintCallable, Category = "WidgetOperations") // -10s 더하기
+	static void AddSecondsToCurrentTimemin(int32 Seconds);
+
+private:
+	static double StartTime;
+	static double changeTime; 
 };

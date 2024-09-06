@@ -7,6 +7,7 @@
 #include "Sockets.h"
 #include "SocketSubsystem.h"
 #include "Networking.h"
+#include "UnrealClientEnum.h"
 #include "ProtocolLibrary.generated.h"
 
 UCLASS()
@@ -118,6 +119,11 @@ public:
 
 	FTimespan CurrentTime; // TI
 
+	int32 FutureTimeAlpha; // seconds 단위로 몇 초뒤의 미래인지
+
+	// Response 응답값(미래)를 TArray에 저장
+	TMap<KindPV, TArray<float>> TransformFutureDataResponse8082;
+
 private:
 
 
@@ -130,9 +136,11 @@ private:
 	FSocket* Socket8082;
 	FSocket* Socket8083;
 
+	// 서버에게 받은 응답값을 저장
 	FString Response8081;
 	FString Response8082;
 	FString Response8083;
+
 
 	// 메시지를 주기적으로 보내기 위한 타이머 변수
 	float TimeSinceLastSend;
@@ -142,4 +150,6 @@ private:
 
 	// 메시지를 서버에 보내는 함수
 	void SendMessageToServer(FSocket* Socket, int32 Port);
+
+	
 };

@@ -126,8 +126,8 @@ void AUnrealClientCharacter::BeginPlay()
 	//Z√‡ º≥¡§
 	CenterIndexZ = FMath::FloorToInt((CameraLocation.Z - GridStartLocation.Z) / VoxelSpacingZ);
 
-	CurrentLocationStatus.Reserve(KIND_PV_LENGTH);
-	//CurrentLocationStatus.Init(0.0f, 7);
+	//CurrentLocationStatus.Reserve(KIND_PV_LENGTH);
+	CurrentLocationStatus.Init(0.0f, 7);
 }
 
 void AUnrealClientCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)

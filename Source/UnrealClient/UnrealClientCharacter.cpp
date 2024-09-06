@@ -17,6 +17,8 @@
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
+AUnrealClientCharacter::LocationStatus AUnrealClientCharacter::CurrentLocationStatus;
+
 //////////////////////////////////////////////////////////////////////////
 // AUnrealClientCharacter
 

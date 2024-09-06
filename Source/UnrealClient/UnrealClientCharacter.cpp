@@ -235,15 +235,47 @@ void AUnrealClientCharacter::Tick(float DeltaTime)
 
 
 	//UE_LOG(LogTemplateCharacter, Log, TEXT("Player is at X index: %d, Y index: %d"), IndexX, IndexY);
+	// 포인터를 사용하여 현재 값을 추적
+	int32 valueIndex = 0;
+	// SpawnedVoxels의 각 class별로 density가 있고, 모든 class의 nowpPV는 동일하고
+	for (AVoxel_Color* s : SpawnedVoxels)
+	{
+		s->nowPV = (KindPV) ProtocolLibraryInstance->SelectedValue;
+		//UE_LOG(LogTemp, Log, TEXT("----------------------> SetNowData Opened!!! [%d] -----"), (int32)ProtocolLibraryInstance->SelectedValue);
+		//if (!ProtocolLibraryInstance->port8081ResponseAnswer.IsEmpty())
+		//{
+		//	// 배열의 값이 여전히 남아 있는지 확인
+		//	if (valueIndex < ProtocolLibraryInstance->port8081ResponseAnswer.Num())
+		//	{
+		//		// 배열에서 값을 가져와 Voxel의 Density에 할당 (예를 들어 Density가 double 속성일 경우)
+		//		s->density = ProtocolLibraryInstance->port8081ResponseAnswer[valueIndex];
 
-	for (AVoxel_Color* s: SpawnedVoxels) {
-	   //s->SetColorWhiteToRed(persent);
-	   //s->DynamicMaterial->SetVectorParameterValue(FName("ColorParam"), FLinearColor::MakeRandomColor());
-	   s->DynamicMaterial->SetVectorParameterValue(FName("ColorParam"), FLinearColor(1.0f, 0.25f, 0.25f, 1.0f));
-	   s->DynamicMaterial->SetScalarParameterValue(FName("OpacityParam"), 0.01f);
+		//		// 다음 값으로 이동
+		//		valueIndex++;
+		//	}
+		//	else
+		//	{
+		//		// 배열의 값이 모두 소진되면 필요한 조치
+
+		//	}
+		if (!ProtocolLibraryInstance->port8081ResponseAnswer.IsEmpty())
+		{
+			s->density = ProtocolLibraryInstance->port8081ResponseAnswer[valueIndex];
+			valueIndex++;
+			s->ChangeColor();
+		}
+		else
+		{
+			s->DynamicMaterial->SetVectorParameterValue(FName("ColorParam"), FLinearColor(1.0f, 0.25f, 0.25f, 1.0f));
+			s->DynamicMaterial->SetScalarParameterValue(FName("OpacityParam"), 0.01f);
+		}
+;			
+		//}
+		// 
+		//s->DynamicMaterial->SetVectorParameterValue(FName("ColorParam"), FLinearColor::MakeRandomColor());
+		//s->DynamicMaterial->SetVectorParameterValue(FName("ColorParam"), FLinearColor(1.0f, 0.25f, 0.25f, 1.0f));
+		//s->DynamicMaterial->SetScalarParameterValue(FName("OpacityParam"), 0.01f);
 	}
-
-
 }
 
 

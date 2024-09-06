@@ -73,31 +73,38 @@ void AVoxel_Color::ChangeColor() {
     double densityPercent;
 
     // PV의 범위에 따른 dencity인지 검증
-    if ((DENSITY_MIN[nowPV] > density) || (DENSITY_MAX[nowPV] < density)) {
-        UE_LOG(LogTemp, Warning, TEXT("Inputed invalid density's value!!"));
-        return;
-    }
+    //if ((DENSITY_MIN[nowPV] > density) || (DENSITY_MAX[nowPV] < density)) {
+    //    UE_LOG(LogTemp, Warning, TEXT("Inputed invalid density's value!!"));
+    //    return;
+    //}
     // 표현될 색의 범위를 정한다. (|a| 는 절댓값을 의미한다.) 
     // (density - 최소) / (최대 - 최소) * 100 = (범위에 대한 %) 
     // Color의
     densityPercent = (density - DENSITY_MIN[nowPV]) / (DENSITY_MAX[nowPV] - DENSITY_MIN[nowPV]) * 100;
 
-    // PV에 따른 색상 color 색깔 범위 설정
+
+       //UE_LOG(LogTemp, Warning, TEXT("selected nowPV!"));
+       //UE_LOG(LogTemp, Log, TEXT("----------------------> nowPV Opened!!! [%d] -----"), (int32)nowPV);
     switch (nowPV) {
+
     case O2:
         SetColorWhiteToRed(densityPercent, true); // Red ~ White
+        //UE_LOG(LogTemp, Warning, TEXT("O2"));
         break;
 
     case CO2:
         SetColorWhiteToRed(densityPercent); // White ~ Red
+        //UE_LOG(LogTemp, Warning, TEXT("CO2"));
         break;
 
     case CO:
         SetColorWhiteToRed(densityPercent); // White ~ Red
+        //UE_LOG(LogTemp, Warning, TEXT("CO"));
         break;
 
     case TEMP:
         SetColorBlueToRed(densityPercent, true); // Red ~ Blue
+        //UE_LOG(LogTemp, Warning, TEXT("TEMP"));
         break;
 
     case VELOCITY:
@@ -111,10 +118,15 @@ void AVoxel_Color::ChangeColor() {
     case FUEL:
         SetColorWhiteToBlack(densityPercent); // White ~ Black
         break;
+    default:
+        DynamicMaterial->SetVectorParameterValue(FName("ColorParam"), FLinearColor(1.0f, 0.25f, 0.25f, 1.0f));
+        DynamicMaterial->SetScalarParameterValue(FName("OpacityParam"), 0.01f); 
+        break;
     }
 
     // 인스턴스 설정
-    DynamicMaterial->SetVectorParameterValue(FName("Param"), FLinearColor(1, densityPercent, densityPercent, 1));
+    // (일단 보류)
+    //DynamicMaterial->SetVectorParameterValue(FName("Param"), FLinearColor(1, densityPercent, densityPercent, 1));
 }
 
 

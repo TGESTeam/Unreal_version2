@@ -76,11 +76,13 @@ class UNREALCLIENT_API UAllStateWidgetBFL : public UBlueprintFunctionLibrary
 	/* --------------- [Port 8083] --------------- */
 	// Image 위젯의 색상을 변경하는 함수
 	UFUNCTION(BlueprintCallable, Category = "WidgetOperations")
-	static void SetImageColor(UImage* Image, const FLinearColor& NewColor);
+	static void SetImageColor(UObject* WorldContextObject,UImage* Image, const FLinearColor& NewColor);
 
 	// 여러 Image 위젯의 색상을 빨간색으로 변경하는 함수
 	UFUNCTION(BlueprintCallable, Category = "WidgetOperations")
-	static void SetImagesColor(const TArray<UImage*>& Images);
+	static void SetImageColorNextBtn(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor);
+
+	static void CheckResponseAndSetColor(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor);
 
 
 	UFUNCTION(BlueprintCallable, Category = "WidgetOperations") //현재 시간 업데이트

@@ -119,7 +119,7 @@ void AProtocolLibrary::Tick(float DeltaTime)
 	TimeSinceLastSend += DeltaTime;
 
 	// 2초마다 메시지 전송
-	if (TimeSinceLastSend >= 2.0f)
+	if (TimeSinceLastSend >= 1.0f)
 	{
 		//SendMessageToServer(Socket8081, TEXT("Message to Server 1"));
 		//SendMessageToServer(Socket8082, TEXT("Message to Server 2"));
@@ -173,11 +173,125 @@ void AProtocolLibrary::ParshingResponsePort8081(FString& ReceivedMessage)
 	TArray<FString> stringArray;
 	ReceivedMessage.ParseIntoArray(stringArray, TEXT(","), true);
 
+	if (port8081ResponseAnswer.Num() > 0) // 배열에 요소가 있는지 확인
+	{
+		port8081ResponseAnswer.Empty(); // 모든 요소 삭제
+	}
 	for (const FString& str : stringArray)
 	{
 		double value = FCString::Atod(*str);
 		this->port8081ResponseAnswer.Add(value);
 	}
+}
+
+void AProtocolLibrary::ParshingResponsePort8083(FString& ReceivedMessage)
+{	
+	//LogTemp: NewColor: R = 1.000000, G = 0.000000, B = 0.000000, A = 1.000000
+	TArray<FString> stringArray;
+	ReceivedMessage.ParseIntoArray(stringArray, TEXT(","), true);
+
+	if (port8083ResponseAnswer.Num() > 0) // 배열에 요소가 있는지 확인
+	{
+		port8083ResponseAnswer.Empty(); // 모든 요소 삭제
+	}
+	for (const FString& str : stringArray)
+	{
+		double value = FCString::Atod(*str);
+		this->port8083ResponseAnswer.Add(value);
+		//UE_LOG(LogTemp, Log, TEXT("port8083ResponseAnswer %lf"), value);
+	}
+	this->port8083Answer = this->port8083ResponseAnswer;
+}
+
+FLinearColor AProtocolLibrary::GetLienarColor(double& density, int32 selectedPVIndex)
+{
+	double densityPercent;
+
+	// PV의 범위에 따른 dencity인지 검증
+	//if ((DENSITY_MIN[nowPV] > density) || (DENSITY_MAX[nowPV] < density)) {
+	//    UE_LOG(LogTemp, Warning, TEXT("Inputed invalid density's value!!"));
+	//    return;
+	//}
+	// 표현될 색의 범위를 정한다. (|a| 는 절댓값을 의미한다.) 
+	// (density - 최소) / (최대 - 최소) * 100 = (범위에 대한 %) 
+	// Color의
+	densityPercent = (density - AVoxel_Color::DENSITY_MIN[selectedPVIndex]) / (AVoxel_Color::DENSITY_MAX[selectedPVIndex] - AVoxel_Color::DENSITY_MIN[selectedPVIndex]) * 100;
+
+	// PV에 따른 색상 color 색깔 범위 설정
+	switch ((KindPV)selectedPVIndex) {
+	case O2:
+		return SetColorWhiteToRedCrossSection(densityPercent, true); // Red ~ White
+		break;
+
+	case CO2:
+		return SetColorWhiteToRedCrossSection(densityPercent); // White ~ Red
+		break;
+
+	case CO:
+		return SetColorWhiteToRedCrossSection(densityPercent); // White ~ Red
+		break;
+
+	case TEMP:
+		return SetColorBlueToRedCrossSection(densityPercent, true); // Red ~ Blue
+		break;
+
+	case VELOCITY:
+		return SetColorBlueToRedCrossSection(densityPercent); // Blue ~ Red
+		break;
+
+	case ACCEL:
+		return SetColorBlueToRedCrossSection(densityPercent); // Blue ~ Red
+		break;
+
+	case FUEL:
+		return SetColorWhiteToBlackCrossSection(densityPercent); // White ~ Black
+		break;
+	default:
+		// 투명색 설정
+		// 4번째 param을 0.0f로 해야함
+		return FLinearColor(1.0f, 0.25f, 0.25f, 0.2f);
+		break;
+	}
+
+	return FLinearColor();
+}
+
+FLinearColor AProtocolLibrary::SetColorWhiteToRedCrossSection(double& density, bool reverse)
+{
+	if (reverse) { // Red ~ White
+		density = (1.0f - density);
+	}
+
+	return FLinearColor(1.0f, density, density, 1.0f);
+}
+
+FLinearColor AProtocolLibrary::SetColorBlueToRedCrossSection(double& density, bool reverse)
+{
+	if (reverse) {
+		density = (1.0f - density); // densityPersent는 오직 0~1 사이 이므로 음수 판별x
+	}
+
+
+	if (density >= 0.0f && density <= 0.25f) { // R증가, B감소
+		return FLinearColor((density / 2), 0.0f, (1.0f - (density / 2)), 1.0f);
+	}
+	else if ((density > 0.25f && density <= 0.4f)) { // R 2배증가, B 2배감소 (보라색을 나타내지 않기 위해)
+		return FLinearColor((density * 2), 0.0f, ((1.0f - density) * 2), 1.0f);
+	}
+	else if (density > 0.4f) { // 위의 상태를 천천히 유지시킴
+		return FLinearColor(density, 0.0f, (1.0f - density), 1.0f);
+	}
+
+	return FLinearColor();
+}
+
+FLinearColor AProtocolLibrary::SetColorWhiteToBlackCrossSection(double& density, bool reverse)
+{
+	if (reverse) {
+		density = (1.0f - density);
+	}
+
+	return FLinearColor((1.0f - density), (1.0f - density), (1.0f - density), 1.0f);
 }
 
 void AProtocolLibrary::setPort8082_request(int32 index, KindPV seletedPV) {
@@ -272,12 +386,12 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 			int32 Size = FCString::Strlen(SerializedChar) + 1;
 			int32 Sent = 0;
 
-			UE_LOG(LogTemp, Log, TEXT("Message Status: %s"), *Message);
+			//UE_LOG(LogTemp, Log, TEXT("Message Status: %s"), *Message);
 			Socket->Send((uint8*)TCHAR_TO_UTF8(SerializedChar), Size, Sent);
 
 			// 수신된 데이터의 크기에 맞춰 문자열 변환
 			FString ReceivedMessage = ReceiveData(Socket);
-			UE_LOG(LogTemp, Log, TEXT("Received from server: %s"), *ReceivedMessage);
+			//UE_LOG(LogTemp, Log, TEXT("Port 8081 Received from server: %s"), *ReceivedMessage);
 
 			if (ReceivedMessage.Contains(TEXT("None"))) // None일 때
 			{
@@ -349,7 +463,7 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 
 			// 수신된 데이터의 크기에 맞춰 문자열 변환
 			FString ReceivedMessage = ReceiveData(Socket);
-			UE_LOG(LogTemp, Log, TEXT("Received from server: %s"), *ReceivedMessage);
+			//UE_LOG(LogTemp, Log, TEXT("Port 8082 Received from server: %s"), *ReceivedMessage);
 		}
 		else if (Port == 8083)
 		{
@@ -421,9 +535,11 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 
 			// 수신된 데이터의 크기에 맞춰 문자열 변환
 			FString ReceivedMessage = ReceiveData(Socket);
-			UE_LOG(LogTemp, Log, TEXT("Received from server: %s"), *ReceivedMessage);
-		}
+			//UE_LOG(LogTemp, Log, TEXT("Port 8083 Received from server: %s"), *ReceivedMessage);
 
+			ParshingResponsePort8083(ReceivedMessage);
+
+		}
 	}
 	else
 	{

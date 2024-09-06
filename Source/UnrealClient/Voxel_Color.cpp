@@ -137,18 +137,20 @@ void AVoxel_Color::SetColorBlueToRed(double& densityPersent, bool reverse) {
     if (reverse) {
         densityPersent = (1.0f - densityPersent); // densityPersent는 오직 0~1 사이 이므로 음수 판별x
     }
-
+    
+    FLinearColor SelectedColor;
 
     if (densityPersent >= 0.0f && densityPersent <= 0.25f) { // R증가, B감소
-        FLinearColor((densityPersent / 2), 0.0f, (1.0f - (densityPersent / 2)), 1.0f);
+        SelectedColor = FLinearColor((densityPersent / 2), 0.0f, (1.0f - (densityPersent / 2)), 1.0f);
     }
     else if ((densityPersent > 0.25f && densityPersent <= 0.4f)) { // R 2배증가, B 2배감소 (보라색을 나타내지 않기 위해)
-        FLinearColor((densityPersent * 2), 0.0f, ((1.0f - densityPersent) * 2), 1.0f);
+        SelectedColor = FLinearColor((densityPersent * 2), 0.0f, ((1.0f - densityPersent) * 2), 1.0f);
     }
     else if (densityPersent > 0.4f) { // 위의 상태를 천천히 유지시킴
-        FLinearColor(densityPersent, 0.0f, (1.0f - densityPersent), 1.0f);
+        SelectedColor = FLinearColor(densityPersent, 0.0f, (1.0f - densityPersent), 1.0f);
     }
 
+    DynamicMaterial->SetVectorParameterValue(FName("ColorParam"), SelectedColor);
 }
 
 // 화이트 ~ 블랙 범위의 Voxel 색깔 변경 (역 가능)

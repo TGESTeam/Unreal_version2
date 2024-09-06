@@ -202,28 +202,186 @@ void UAllStateWidgetBFL::UpdateTextBlock(UObject* WorldContextObject, UTextBlock
 	UE_LOG(LogTemp, Log, TEXT("----> click UpdateTextBlock"));
 }
 
-void UAllStateWidgetBFL::SetImageColor(UImage* Image, const FLinearColor& NewColor)
+void UAllStateWidgetBFL::SetImageColor(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor)
 {
 	if (Image)
 	{
-		// Image 위젯의 Brush Tint Color를 변경
-		Image->SetColorAndOpacity(NewColor);
-	}
-}
+		// NewColor 값을 로그로 출력 LogTemp: NewColor: R=1.000000, G=0.000000, B=0.000000, A=1.000000
+		//UE_LOG(LogTemp, Log, TEXT("NewColor: R=%f, G=%f, B=%f, A=%f"), NewColor.R, NewColor.G, NewColor.B, NewColor.A);
 
-void UAllStateWidgetBFL::SetImagesColor(const TArray<UImage*>& Images)
-{
-	FLinearColor RedColor = FLinearColor::Red;  // 빨간색 정의
+		if (!WorldContextObject) return;
 
-	// 배열에 있는 모든 Image 위젯의 색상을 빨간색으로 변경
-	for (UImage* Image : Images)
-	{
-		if (Image)
+		UWorld* World = WorldContextObject->GetWorld();
+		if (!World) return;
+
+		AProtocolLibrary* ProtocolLibraryInstance = AProtocolLibrary::GetInstance(World);
+
+		if (!ProtocolLibraryInstance->port8083Answer.IsEmpty())
 		{
-			Image->SetColorAndOpacity(RedColor);
+				// 제일 앞에 있는 요소 값을 저장
+				double firstElement = ProtocolLibraryInstance->port8083Answer[0];
+
+				// 제일 앞에 있는 요소 삭제
+				ProtocolLibraryInstance->port8083Answer.RemoveAt(0);
+
+				// firstElement를 여기서 사용
+				FLinearColor KindPVColor = ProtocolLibraryInstance->GetLienarColor(firstElement, ProtocolLibraryInstance->SelectedValue);
+				Image->SetColorAndOpacity(NewColor);
 		}
+		else
+		{
+			// Image 위젯의 Brush Tint Color를 변경 -> 빨간색이 들어옴
+			Image->SetColorAndOpacity(NewColor);
+		}
+	} 
+}
+
+void UAllStateWidgetBFL::SetImageColorNextBtn(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor)
+{
+
+	if (Image)
+	{
+		//UE_LOG(LogTemp, Log, TEXT("NewColor: R=%f, G=%f, B=%f, A=%f"), NewColor.R, NewColor.G, NewColor.B, NewColor.A);
+
+		if (!WorldContextObject) return;
+
+		UWorld* World = WorldContextObject->GetWorld();
+		if (!World) return;
+
+		AProtocolLibrary* ProtocolLibraryInstance = AProtocolLibrary::GetInstance(World);
+		if (!ProtocolLibraryInstance) return;
+
+		// 타이머 설정
+		FTimerHandle TimerHandle;
+		World->GetTimerManager().SetTimer(
+			TimerHandle,
+			[WorldContextObject, Image, NewColor]()
+		{
+			UAllStateWidgetBFL::CheckResponseAndSetColor(WorldContextObject, Image, NewColor);
+		},
+			5.0f, // 0.1초 간격
+			false // 반복 실행
+		);
+	}
+	//if (Image)
+	//{
+	//	//UE_LOG(LogTemp, Log, TEXT("NewColor: R=%f, G=%f, B=%f, A=%f"), NewColor.R, NewColor.G, NewColor.B, NewColor.A);
+
+	//	if (!WorldContextObject) return;
+
+	//	UWorld* World = WorldContextObject->GetWorld();
+	//	if (!World) return;
+
+	//	AProtocolLibrary* ProtocolLibraryInstance = AProtocolLibrary::GetInstance(World);
+	//	if (!ProtocolLibraryInstance) return;
+
+	//	// 타이머 핸들 생성
+	//	FTimerHandle TimerHandle;
+	//	World->GetTimerManager().SetTimer(
+	//		TimerHandle,
+	//		[WorldContextObject, Image, NewColor, &TimerHandle]()
+	//	{
+	//		bool bShouldStop = UAllStateWidgetBFL::CheckResponseAndSetColor(WorldContextObject, Image, NewColor);
+
+	//		// KindPVColor로 색이 설정되었다면 타이머 중지
+	//		if (bShouldStop)
+	//		{
+	//			UWorld* World = WorldContextObject->GetWorld();
+	//			if (World)
+	//			{
+	//				World->GetTimerManager().ClearTimer(TimerHandle);
+	//			}
+	//		}
+	//	},
+	//		6.0f, // 0.1초 간격
+	//		true // 반복 실행
+	//	);
+	//}
+
+}
+
+
+void UAllStateWidgetBFL::CheckResponseAndSetColor(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor)
+{
+	if (!WorldContextObject || !Image) return;
+
+	UWorld* World = WorldContextObject->GetWorld();
+	if (!World) return;
+
+	AProtocolLibrary* ProtocolLibraryInstance = AProtocolLibrary::GetInstance(World);
+	if (!ProtocolLibraryInstance) return;
+
+	if (!ProtocolLibraryInstance->port8083Answer.IsEmpty())
+	{
+		// 값이 존재할 때 타이머를 중지
+		World->GetTimerManager().ClearAllTimersForObject(WorldContextObject);
+
+		// 제일 앞에 있는 요소 값을 저장
+		double firstElement = ProtocolLibraryInstance->port8083Answer[0];
+
+		// 제일 앞에 있는 요소 삭제
+		ProtocolLibraryInstance->port8083Answer.RemoveAt(0);
+
+		// firstElement를 사용하여 색상 설정
+		FLinearColor KindPVColor = ProtocolLibraryInstance->GetLienarColor(firstElement, ProtocolLibraryInstance->SelectedValue);
+		Image->SetColorAndOpacity(KindPVColor);
+	}
+	else
+	{
+		// 아직 값이 없으면 대기
+		Image->SetColorAndOpacity(NewColor); // 초기 색상 설정
 	}
 }
+
+
+//bool UAllStateWidgetBFL::CheckResponseAndSetColor(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor)
+//{
+//	if (!WorldContextObject || !Image) return false;
+//
+//	UWorld* World = WorldContextObject->GetWorld();
+//	if (!World) return false;
+//
+//	AProtocolLibrary* ProtocolLibraryInstance = AProtocolLibrary::GetInstance(World);
+//	if (!ProtocolLibraryInstance) return false;
+//
+//	if (!ProtocolLibraryInstance->port8083Answer.IsEmpty())
+//	{
+//		// 제일 앞에 있는 요소 값을 저장
+//		double firstElement = ProtocolLibraryInstance->port8083Answer[0];
+//
+//		// 제일 앞에 있는 요소 삭제
+//		ProtocolLibraryInstance->port8083Answer.RemoveAt(0);
+//
+//		// firstElement를 사용하여 색상 설정
+//		FLinearColor KindPVColor = ProtocolLibraryInstance->GetLienarColor(firstElement, ProtocolLibraryInstance->SelectedValue);
+//		//UE_LOG(LogTemp, Log, TEXT("KindPVColor: R=%f, G=%f, B=%f, A=%f"), KindPVColor.R, KindPVColor.G, KindPVColor.B, KindPVColor.A);
+//		Image->SetColorAndOpacity(KindPVColor);
+//
+//		// 색상이 설정되었으므로 반복 중지
+//		return true;
+//	}
+//	else
+//	{
+//		// 아직 값이 없으면 대기, 초기 색상 설정
+//		Image->SetColorAndOpacity(NewColor);
+//	}
+//
+//	return false;
+//}
+
+//void UAllStateWidgetBFL::SetImagesColor(const TArray<UImage*>& Images)
+//{
+//	FLinearColor RedColor = FLinearColor::Red;  // 빨간색 정의
+//
+//	// 배열에 있는 모든 Image 위젯의 색상을 빨간색으로 변경
+//	for (UImage* Image : Images)
+//	{
+//		if (Image)
+//		{
+//			Image->SetColorAndOpacity(RedColor);
+//		}
+//	}
+//}
 
 void UAllStateWidgetBFL::UpdateTimeTextBlock(AUnrealClientCharacter* PlayerCharacter, UObject* WorldContextObject, UTextBlock* TextBlock)
 {
@@ -242,7 +400,7 @@ void UAllStateWidgetBFL::UpdateTimeTextBlock(AUnrealClientCharacter* PlayerChara
 
 	// 현재 시간을 초 단위로 계산, changeTime을 더함
 	double CurrentTimeInSeconds = FPlatformTime::Seconds() - StartTime + changeTime;
-	UE_LOG(LogTemp, Log, TEXT("changeTime : %lf"), changeTime);
+	//UE_LOG(LogTemp, Log, TEXT("changeTime : %lf"), changeTime);
 	if (CurrentTimeInSeconds < 0)
 	{
 		CurrentTimeInSeconds = 0.0;

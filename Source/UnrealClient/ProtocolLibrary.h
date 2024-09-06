@@ -8,6 +8,7 @@
 #include "SocketSubsystem.h"
 #include "Networking.h"
 #include "UnrealClientEnum.h"
+#include "Voxel_Color.h"
 #include "ProtocolLibrary.generated.h"
 
 UCLASS()
@@ -95,6 +96,18 @@ public:
 	TArray<bool> Port8083_request;
 	void setPort8083_request(int32 index, FloorPlanPV seletedPV);
 	void setPort8083_requestPVAllFalse();
+
+
+	//Port8083 ³óµµ°ª
+	TArray<double> port8083ResponseAnswer;
+	TArray<double> port8083Answer;
+	void ParshingResponsePort8083(FString& ReceivedMessage);
+	FLinearColor GetLienarColor(double& density, int32 selectedPVIndex);
+	FLinearColor SetColorWhiteToRedCrossSection(double& density, bool reverse = false);
+	FLinearColor SetColorBlueToRedCrossSection(double& density, bool reverse = false);
+	FLinearColor SetColorWhiteToBlackCrossSection(double& density, bool reverse = false);
+	//Port8083 ´Ü¸éµµ Ä®·¯ ÁÖÀÔ
+
 	//struct Port8083_request {
 	//	bool X = false;
 	//	bool Y = false;

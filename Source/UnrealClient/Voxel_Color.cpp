@@ -73,10 +73,10 @@ void AVoxel_Color::ChangeColor() {
     double densityPercent;
 
     // PV의 범위에 따른 dencity인지 검증
-    if ((DENSITY_MIN[nowPV] > density) || (DENSITY_MAX[nowPV] < density)) {
-        UE_LOG(LogTemp, Warning, TEXT("Inputed invalid density's value!!"));
-        return;
-    }
+    //if ((DENSITY_MIN[nowPV] > density) || (DENSITY_MAX[nowPV] < density)) {
+    //    UE_LOG(LogTemp, Warning, TEXT("Inputed invalid density's value!!"));
+    //    return;
+    //}
     // 표현될 색의 범위를 정한다. (|a| 는 절댓값을 의미한다.) 
     // (density - 최소) / (최대 - 최소) * 100 = (범위에 대한 %) 
     // Color의
@@ -111,10 +111,14 @@ void AVoxel_Color::ChangeColor() {
     case FUEL:
         SetColorWhiteToBlack(densityPercent); // White ~ Black
         break;
+    default:
+        DynamicMaterial->SetVectorParameterValue(FName("ColorParam"), FLinearColor(1.0f, 0.25f, 0.25f, 1.0f));
+        DynamicMaterial->SetScalarParameterValue(FName("OpacityParam"), 0.01f);
+        break;
     }
 
     // 인스턴스 설정
-    DynamicMaterial->SetVectorParameterValue(FName("Param"), FLinearColor(1, densityPercent, densityPercent, 1));
+    //DynamicMaterial->SetVectorParameterValue(FName("Param"), FLinearColor(1, densityPercent, densityPercent, 1));
 }
 
 

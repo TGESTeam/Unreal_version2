@@ -47,17 +47,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
 
-	struct LocationStatus { // reponse로 받은 density를 저장함 (8082)
-		float CO2 = 0.0f;
-		float O2 = 0.0f;
-		float CO = 0.0f;
-		float TEMP = 0.0f;
-		float VELOCITY = 0.0f;
-		float ACCEL = 0.0f;
-		float FUEL = 0.0f;
-	};
+	//struct LocationStatus { // reponse로 받은 density를 저장함 (8082)
+	//	float CO2 = 0.0f;
+	//	float O2 = 0.0f;
+	//	float CO = 0.0f;
+	//	float TEMP = 0.0f;
+	//	float VELOCITY = 0.0f;
+	//	float ACCEL = 0.0f;
+	//	float FUEL = 0.0f;
+	//};
 
-	static LocationStatus CurrentLocationStatus;
+	//static LocationStatus CurrentLocationStatus;
+	static TArray<float> CurrentLocationStatus;
 
 	static int32 futureTime;
 

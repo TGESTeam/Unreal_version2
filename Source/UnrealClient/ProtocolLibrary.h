@@ -33,68 +33,85 @@ public:
 	};
 
 	//Port8081 Request
-	struct Port8081_request {
-		bool CO2 = false;
-		bool O2 = false;
-		bool CO = false;
-		bool TEMP = false;
-		bool VELOCITY = false;
-		bool ACCEL = false;
-		bool FUEL = false;
+	TArray<bool> Port8081_request;
 
-	
-		void SetOnlyOneTrue(bool& target)
-		{
-			// 모든 멤버를 false로 초기화
-			CO2 = false;
-			O2 = false;
-			CO = false;
-			TEMP = false;
-			VELOCITY = false;
-			ACCEL = false;
-			FUEL = false;
+	//선택된 값
+	int32 SelectedValue;
+	void setPort8081_requestPV(int32 index, KindPV selectedPV);
+	void setPort8081_requestPVAllFalse();
 
-			target = true;
-		}
-	};
+	//Port8081 농도값
+	TArray<double> port8081ResponseAnswer;
+	void ParshingResponsePort8081(FString& ReceivedMessage);
+	//struct Port8081_request {
+	//	bool CO2 = false;
+	//	bool O2 = false;
+	//	bool CO = false;
+	//	bool TEMP = false;
+	//	bool VELOCITY = false;
+	//	bool ACCEL = false;
+	//	bool FUEL = false;
 
-	Port8081_request port8081Request;
+	//
+	//	void SetOnlyOneTrue(bool& target)
+	//	{
+	//		// 모든 멤버를 false로 초기화
+	//		CO2 = false;
+	//		O2 = false;
+	//		CO = false;
+	//		TEMP = false;
+	//		VELOCITY = false;
+	//		ACCEL = false;
+	//		FUEL = false;
+
+	//		target = true;
+	//	}
+	//};
+
+	//Port8081_request port8081Request;
+
+	// ---------------------------------------
 
 	//Port8082 Request
 	int32 PredictTime = 0;
-	struct Port8082_request { // 다중 선택 가능
-		bool CO2 = false;
-		bool O2 = false;
-		bool CO = false;
-		bool TEMP = false;
-		bool VELOCITY = false;
-		bool ACCEL = false;
-		bool FUEL = false;
-	};
+	TArray<bool> Port8082_request;
+	void setPort8082_request(int32 index, KindPV selectedPV);
+	//int32 PredictTime = 0;
+	//struct Port8082_request { // 다중 선택 가능
+	//	bool CO2 = false;
+	//	bool O2 = false;
+	//	bool CO = false;
+	//	bool TEMP = false;
+	//	bool VELOCITY = false;
+	//	bool ACCEL = false;
+	//	bool FUEL = false;
+	//};
 
-	Port8082_request port8082Request;
+	//Port8082_request port8082Request;
 
-
-
+	//------------------------------------
 
 	//Port8083 Request
-	struct Port8083_request {
-		bool X = false;
-		bool Y = false;
-		bool Z = false;
+	TArray<bool> Port8083_request;
+	void setPort8083_request(int32 index, FloorPlanPV seletedPV);
+	void setPort8083_requestPVAllFalse();
+	//struct Port8083_request {
+	//	bool X = false;
+	//	bool Y = false;
+	//	bool Z = false;
 
 
-		void SetOnlyOneTrue8083(bool& target)
-		{
-			// 모든 멤버를 false로 초기화
-			X = false;
-			Y = false;
-			Z = false;
-			target = true;
-		}
-	};
+	//	void SetOnlyOneTrue8083(bool& target)
+	//	{
+	//		// 모든 멤버를 false로 초기화
+	//		X = false;
+	//		Y = false;
+	//		Z = false;
+	//		target = true;
+	//	}
+	//};
 
-	Port8083_request port8083Request;
+	//Port8083_request port8083Request;
 
 
 

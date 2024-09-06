@@ -18,35 +18,42 @@ void UAllStateWidgetBFL::SetNowPVData(UObject* WorldContextObject, KindPV select
 
 	AProtocolLibrary* ProtocolLibraryInstance = AProtocolLibrary::GetInstance(World);
 
-	UE_LOG(LogTemp, Log, TEXT("----------------------> SetNowData Opened!!! [%d]"), (int32)selectedPV);
 
+	UE_LOG(LogTemp, Log, TEXT("----------------------> SetNowData Opened!!! [%d]"), (int32)selectedPV);
+	ProtocolLibraryInstance->setPort8081_requestPVAllFalse();
 	if (selectedPV == CO2) {
-		ProtocolLibraryInstance->port8081Request.SetOnlyOneTrue(ProtocolLibraryInstance->port8081Request.CO2);
+		//ProtocolLibraryInstance->port8081Request.SetOnlyOneTrue(ProtocolLibraryInstance->port8081Request.CO2);
+		ProtocolLibraryInstance->setPort8081_requestPV((int32)selectedPV, selectedPV);
 	}
 	else if (selectedPV == O2) {
-		ProtocolLibraryInstance->port8081Request.SetOnlyOneTrue(ProtocolLibraryInstance->port8081Request.O2);
+		//ProtocolLibraryInstance->port8081Request.SetOnlyOneTrue(ProtocolLibraryInstance->port8081Request.O2);
+		ProtocolLibraryInstance->setPort8081_requestPV((int32)selectedPV, selectedPV);
 	}
 	else if (selectedPV == CO)
 	{
-		ProtocolLibraryInstance->port8081Request.SetOnlyOneTrue(ProtocolLibraryInstance->port8081Request.CO);
+		//ProtocolLibraryInstance->port8081Request.SetOnlyOneTrue(ProtocolLibraryInstance->port8081Request.CO);
+		ProtocolLibraryInstance->setPort8081_requestPV((int32)selectedPV, selectedPV);
 	}
 	else if (selectedPV == TEMP)
 	{
-		ProtocolLibraryInstance->port8081Request.SetOnlyOneTrue(ProtocolLibraryInstance->port8081Request.TEMP);
+		//ProtocolLibraryInstance->port8081Request.SetOnlyOneTrue(ProtocolLibraryInstance->port8081Request.TEMP);
+		ProtocolLibraryInstance->setPort8081_requestPV((int32)selectedPV, selectedPV);
 
 	}
 	else if (selectedPV == VELOCITY)
 	{
-		ProtocolLibraryInstance->port8081Request.SetOnlyOneTrue(ProtocolLibraryInstance->port8081Request.VELOCITY);
-
+		//ProtocolLibraryInstance->port8081Request.SetOnlyOneTrue(ProtocolLibraryInstance->port8081Request.VELOCITY);
+		ProtocolLibraryInstance->setPort8081_requestPV((int32)selectedPV, selectedPV);
 	}
 	else if (selectedPV == ACCEL)
 	{
-		ProtocolLibraryInstance->port8081Request.SetOnlyOneTrue(ProtocolLibraryInstance->port8081Request.ACCEL);
+		//ProtocolLibraryInstance->port8081Request.SetOnlyOneTrue(ProtocolLibraryInstance->port8081Request.ACCEL);
+		ProtocolLibraryInstance->setPort8081_requestPV((int32)selectedPV, selectedPV);
 	}
 	else if (selectedPV == FUEL)
 	{
-		ProtocolLibraryInstance->port8081Request.SetOnlyOneTrue(ProtocolLibraryInstance->port8081Request.FUEL);
+		//ProtocolLibraryInstance->port8081Request.SetOnlyOneTrue(ProtocolLibraryInstance->port8081Request.FUEL);
+		ProtocolLibraryInstance->setPort8081_requestPV((int32)selectedPV, selectedPV);
 	}
 	//else if (selectedPV == KIND_PV_LENGTH)
 	UE_LOG(LogTemp, Log, TEXT("----> Where is my selectedPV?"));
@@ -67,52 +74,59 @@ void UAllStateWidgetBFL::SetGraphViewStatePV(UObject* WorldContextObject, KindPV
 
 	if (selectedPV == CO2)
 	{
-		if (ProtocolLibraryInstance->port8082Request.CO2 == true)
-			ProtocolLibraryInstance->port8082Request.CO2 = false;
-		else
-			ProtocolLibraryInstance->port8082Request.CO2 = true;
+		ProtocolLibraryInstance->setPort8082_request((int32)selectedPV, selectedPV);
+		//if (ProtocolLibraryInstance->port8082Request.CO2 == true)
+		//	ProtocolLibraryInstance->port8082Request.CO2 = false;
+		//else
+		//	ProtocolLibraryInstance->port8082Request.CO2 = true;
 	}
 	else if (selectedPV == O2)
 	{
-		if (ProtocolLibraryInstance->port8082Request.O2 == true)
-			ProtocolLibraryInstance->port8082Request.O2 = false;
-		else
-			ProtocolLibraryInstance->port8082Request.O2 = true;
+		//if (ProtocolLibraryInstance->port8082Request.O2 == true)
+		//	ProtocolLibraryInstance->port8082Request.O2 = false;
+		//else
+		//	ProtocolLibraryInstance->port8082Request.O2 = true;
+		ProtocolLibraryInstance->setPort8082_request((int32)selectedPV, selectedPV);
 	}
 	else if (selectedPV == CO)
 	{
-		if (ProtocolLibraryInstance->port8082Request.CO == true)
-			ProtocolLibraryInstance->port8082Request.CO = false;
-		else
-			ProtocolLibraryInstance->port8082Request.CO = true;
+		//if (ProtocolLibraryInstance->port8082Request.CO == true)
+		//	ProtocolLibraryInstance->port8082Request.CO = false;
+		//else
+		//	ProtocolLibraryInstance->port8082Request.CO = true;
+		ProtocolLibraryInstance->setPort8082_request((int32)selectedPV, selectedPV);
 	}
 	else if (selectedPV == TEMP)
 	{
-		if (ProtocolLibraryInstance->port8082Request.TEMP == true)
-			ProtocolLibraryInstance->port8082Request.TEMP = false;
-		else
-			ProtocolLibraryInstance->port8082Request.TEMP = true;
+		//if (ProtocolLibraryInstance->port8082Request.TEMP == true)
+		//	ProtocolLibraryInstance->port8082Request.TEMP = false;
+		//else
+		//	ProtocolLibraryInstance->port8082Request.TEMP = true;
+		ProtocolLibraryInstance->setPort8082_request((int32)selectedPV, selectedPV);
 	}
 	else if (selectedPV == VELOCITY)
 	{
-		if (ProtocolLibraryInstance->port8082Request.VELOCITY == true)
-			ProtocolLibraryInstance->port8082Request.VELOCITY = false;
-		else
-			ProtocolLibraryInstance->port8082Request.VELOCITY = true;
+		//if (ProtocolLibraryInstance->port8082Request.VELOCITY == true)
+		//	ProtocolLibraryInstance->port8082Request.VELOCITY = false;
+		//else
+		//	ProtocolLibraryInstance->port8082Request.VELOCITY = true;
+		ProtocolLibraryInstance->setPort8082_request((int32)selectedPV, selectedPV);
 	}
 	else if (selectedPV == ACCEL)
 	{
-		if (ProtocolLibraryInstance->port8082Request.ACCEL == true)
-			ProtocolLibraryInstance->port8082Request.ACCEL = false;
-		else
-			ProtocolLibraryInstance->port8082Request.ACCEL = true;
+		//if (ProtocolLibraryInstance->port8082Request.ACCEL == true)
+		//	ProtocolLibraryInstance->port8082Request.ACCEL = false;
+		//else
+		//	ProtocolLibraryInstance->port8082Request.ACCEL = true;
+		ProtocolLibraryInstance->setPort8082_request((int32)selectedPV, selectedPV);
 	}
 	else if (selectedPV == FUEL)
 	{
-		if (ProtocolLibraryInstance->port8082Request.FUEL == true)
-			ProtocolLibraryInstance->port8082Request.FUEL = false;
-		else
-			ProtocolLibraryInstance->port8082Request.FUEL = true;
+		//if (ProtocolLibraryInstance->port8082Request.FUEL == true)
+		//	ProtocolLibraryInstance->port8082Request.FUEL = false;
+		//else
+		//	ProtocolLibraryInstance->port8082Request.FUEL = true;
+		ProtocolLibraryInstance->setPort8082_request((int32)selectedPV, selectedPV);
 	}
 }
 
@@ -126,19 +140,23 @@ void UAllStateWidgetBFL::SetNowFloorPlanPV(UObject* WorldContextObject, FloorPla
 	AProtocolLibrary* ProtocolLibraryInstance = AProtocolLibrary::GetInstance(World);
 
 
+	ProtocolLibraryInstance->setPort8083_requestPVAllFalse();
 	if (selectedPV == X)
 	{
-		ProtocolLibraryInstance->port8083Request.SetOnlyOneTrue8083(ProtocolLibraryInstance->port8083Request.X);
+		ProtocolLibraryInstance->setPort8083_request((int32)selectedPV, selectedPV);
+		//ProtocolLibraryInstance->port8083Request.SetOnlyOneTrue8083(ProtocolLibraryInstance->port8083Request.X);
 		UE_LOG(LogTemp, Log, TEXT("----> click X"));
 	}
 	else if (selectedPV == Y)
 	{
-		ProtocolLibraryInstance->port8083Request.SetOnlyOneTrue8083(ProtocolLibraryInstance->port8083Request.Y);
+		ProtocolLibraryInstance->setPort8083_request((int32)selectedPV, selectedPV);
+		//ProtocolLibraryInstance->port8083Request.SetOnlyOneTrue8083(ProtocolLibraryInstance->port8083Request.Y);
 		UE_LOG(LogTemp, Log, TEXT("----> click Y"));
 	}
 	else if (selectedPV == Z)
 	{
-		ProtocolLibraryInstance->port8083Request.SetOnlyOneTrue8083(ProtocolLibraryInstance->port8083Request.Z);
+		ProtocolLibraryInstance->setPort8083_request((int32)selectedPV, selectedPV);
+		//ProtocolLibraryInstance->port8083Request.SetOnlyOneTrue8083(ProtocolLibraryInstance->port8083Request.Z);
 		UE_LOG(LogTemp, Log, TEXT("----> click Z"));
 	}
 }
@@ -224,7 +242,7 @@ void UAllStateWidgetBFL::UpdateTimeTextBlock(AUnrealClientCharacter* PlayerChara
 
 	// 현재 시간을 초 단위로 계산, changeTime을 더함
 	double CurrentTimeInSeconds = FPlatformTime::Seconds() - StartTime + changeTime;
-
+	UE_LOG(LogTemp, Log, TEXT("changeTime : %lf"), changeTime);
 	if (CurrentTimeInSeconds < 0)
 	{
 		CurrentTimeInSeconds = 0.0;
@@ -258,12 +276,12 @@ void UAllStateWidgetBFL::InitializeTime()
 
 void UAllStateWidgetBFL::AddSecondsToCurrentTimePlus(int32 Seconds)
 {
-	changeTime += 10.0;
+	changeTime = changeTime + Seconds;
 }
 
 void UAllStateWidgetBFL::AddSecondsToCurrentTimemin(int32 Seconds)
 {
-	changeTime -= 10.0;
+	changeTime = changeTime + Seconds;;
 }
 
 
@@ -287,29 +305,35 @@ void UAllStateWidgetBFL::RequestGraphData(AUnrealClientCharacter* PlayerCharacte
 
 	// (TEST) 작성된 메세지
 	Message.Append("KI");
-	Message.Append(Instance->port8082Request.CO2 ? TEXT("1") : TEXT("0"));
-	Message.Append(Instance->port8082Request.O2 ? TEXT("1") : TEXT("0"));
-	Message.Append(Instance->port8082Request.CO ? TEXT("1") : TEXT("0"));
-	Message.Append(Instance->port8082Request.TEMP ? TEXT("1") : TEXT("0"));
-	Message.Append(Instance->port8082Request.VELOCITY ? TEXT("1") : TEXT("0"));
-	Message.Append(Instance->port8082Request.ACCEL ? TEXT("1") : TEXT("0"));
-	Message.Append(Instance->port8082Request.FUEL ? TEXT("1") : TEXT("0"));
+	for (size_t i = 0; i < Instance->Port8082_request.Num(); i++)
+	{
+		Message.Append(Instance->Port8082_request[i] ? TEXT("1") : TEXT("0"));
+	}
+	//Message.Append(Instance->port8082Request.CO2 ? TEXT("1") : TEXT("0"));
+	//Message.Append(Instance->port8082Request.O2 ? TEXT("1") : TEXT("0"));
+	//Message.Append(Instance->port8082Request.CO ? TEXT("1") : TEXT("0"));
+	//Message.Append(Instance->port8082Request.TEMP ? TEXT("1") : TEXT("0"));
+	//Message.Append(Instance->port8082Request.VELOCITY ? TEXT("1") : TEXT("0"));
+	//Message.Append(Instance->port8082Request.ACCEL ? TEXT("1") : TEXT("0"));
+	//Message.Append(Instance->port8082Request.FUEL ? TEXT("1") : TEXT("0"));
 
 	// (TEST) 허용된 값에 따라 value 채우기
-	PlayerCharacter->CurrentLocationStatus.CO2 = (Instance->port8082Request.CO2) ? FMath::RandRange(0.5f, 1.0f) : 0.0f;
-	PlayerCharacter->CurrentLocationStatus.O2 = Instance->port8082Request.O2 ? FMath::RandRange(0.5f, 1.0f) : 0.0f;
-	PlayerCharacter->CurrentLocationStatus.CO = Instance->port8082Request.CO ? FMath::RandRange(0.5f, 1.0f) : 0.0f;
-	PlayerCharacter->CurrentLocationStatus.TEMP = Instance->port8082Request.TEMP ? FMath::RandRange(0.5f, 1.0f) : 0.0f;
-	PlayerCharacter->CurrentLocationStatus.VELOCITY = Instance->port8082Request.VELOCITY ? FMath::RandRange(0.5f, 1.0f) : 0.0f;
-	PlayerCharacter->CurrentLocationStatus.ACCEL = Instance->port8082Request.ACCEL ? FMath::RandRange(0.5f, 1.0f) : 0.0f;
-	PlayerCharacter->CurrentLocationStatus.FUEL = Instance->port8082Request.FUEL ? FMath::RandRange(0.5f, 1.0f) : 0.0f;
+	for (size_t i = 0; i < Instance->Port8082_request.Num(); i++)
+	{
+		Message.Append(Instance->Port8082_request[i] ? TEXT("1") : TEXT("0"));
+	}
 
+	for (size_t i = 0; i < Instance->Port8082_request.Num(); i++) {
+		if (Instance->Port8082_request[i]) {
+			PlayerCharacter->CurrentLocationStatus[i] = FMath::RandRange(0.5f, 1.0f);
+		}
+	}
 }
 
 bool UAllStateWidgetBFL::IsSubscribe(AUnrealClientCharacter* PlayerCharacter, KindPV selectedPV) {
 	FString Message = TEXT("");
 	if (PlayerCharacter == nullptr) {
-		UE_LOG(LogTemp, Error, TEXT("Not found the Player Character!"));
+		UE_LOG(LogTemp, Error, TEXT("Not found the Player Character!!"));
 		return false;
 	}
 
@@ -319,43 +343,7 @@ bool UAllStateWidgetBFL::IsSubscribe(AUnrealClientCharacter* PlayerCharacter, Ki
 		return false;
 	}
 
-	bool isSubscribe = false;
-
-	//AProtocolLibrary::PutPortDataToOneVar<AProtocolLibrary::Port8082_request, bool>(Instance->port8082Request, isSubscribe, selectedPV);
-
-	switch (selectedPV) {
-	case CO2:
-		isSubscribe = Instance->port8082Request.CO2;
-		break;
-
-	case O2:
-		isSubscribe = Instance->port8082Request.O2;
-		break;
-
-	case CO:
-		isSubscribe = Instance->port8082Request.CO;
-		break;
-
-	case TEMP:
-		isSubscribe = Instance->port8082Request.TEMP;
-		break;
-
-	case VELOCITY:
-		isSubscribe = Instance->port8082Request.VELOCITY;
-		break;
-
-	case ACCEL:
-		isSubscribe = Instance->port8082Request.ACCEL;
-		break;
-
-	case FUEL:
-		isSubscribe = Instance->port8082Request.FUEL;
-		break;
-
-	default:
-		UE_LOG(LogTemp, Error, TEXT("Dose not exist the KindPV!!"));
-		break;
-	}
+	bool isSubscribe = Instance->Port8082_request[selectedPV];
 
 	return isSubscribe;
 }
@@ -369,39 +357,7 @@ float UAllStateWidgetBFL::GetCurrentLocationOfDensity(AUnrealClientCharacter* Pl
 	float density = 0.0f;
 	//AProtocolLibrary::PutPortDataToOneVar<AUnrealClientCharacter::LocationStatus, float>(PlayerCharacter->CurrentLocationStatus, density, selectedPV);
 
-	switch (selectedPV) {
-	case CO2:
-		density = PlayerCharacter->CurrentLocationStatus.CO2;
-		break;
-
-	case O2:
-		density = PlayerCharacter->CurrentLocationStatus.O2;
-		break;
-
-	case CO:
-		density = PlayerCharacter->CurrentLocationStatus.CO;
-		break;
-
-	case TEMP:
-		density = PlayerCharacter->CurrentLocationStatus.TEMP;
-		break;
-
-	case VELOCITY:
-		density = PlayerCharacter->CurrentLocationStatus.VELOCITY;
-		break;
-
-	case ACCEL:
-		density = PlayerCharacter->CurrentLocationStatus.ACCEL;
-		break;
-
-	case FUEL:
-		density = PlayerCharacter->CurrentLocationStatus.FUEL;
-		break;
-
-	default:
-		UE_LOG(LogTemp, Error, TEXT("Dose not exist the KindPV!!"));
-		break;
-	}
+	density = PlayerCharacter->CurrentLocationStatus[selectedPV];
 	
 	if (changeToPercent) {
 

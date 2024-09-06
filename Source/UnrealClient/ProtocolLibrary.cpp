@@ -27,6 +27,10 @@ AProtocolLibrary::AProtocolLibrary()
 	Port8082 = 8082;
 	Port8083 = 8083;
 
+	Port8081_request.Init(false, 7); // 7개의 false 값으로 배열 초기화
+	this->SelectedValue = Port8081_request.Num();
+	Port8083_request.Init(false, 3);
+	Port8082_request.Init(false, 7);
 }
 
 // 싱글톤 인스턴스를 반환하는 함수
@@ -151,6 +155,66 @@ void AProtocolLibrary::ConnectToServer(FSocket*& Socket, const FString& ServerAd
 	}
 }
 
+void AProtocolLibrary::setPort8081_requestPV(int32 index, KindPV seletedPV) {
+
+	Port8081_request[index] = true;
+	this->SelectedValue = (int32)seletedPV;
+	//UE_LOG(LogTemp, Log, TEXT("----------------------> setPort8081_requestPV  [%d]"), index);
+}
+
+void AProtocolLibrary::setPort8081_requestPVAllFalse() {
+	Port8081_request.Init(false, 7);
+}
+
+void AProtocolLibrary::ParshingResponsePort8081(FString& ReceivedMessage)
+{	// "PV" 제거
+	ReceivedMessage.RemoveFromStart(TEXT("PV"));
+
+	TArray<FString> stringArray;
+	ReceivedMessage.ParseIntoArray(stringArray, TEXT(","), true);
+
+	for (const FString& str : stringArray)
+	{
+		double value = FCString::Atod(*str);
+		this->port8081ResponseAnswer.Add(value);
+	}
+}
+
+void AProtocolLibrary::setPort8082_request(int32 index, KindPV seletedPV) {
+
+	if (Port8082_request[index] == true)
+	{
+		Port8082_request[index] = false;
+	}
+	else
+	{
+		Port8082_request[index] = true;
+	}
+	//UE_LOG(LogTemp, Log, TEXT("----------------------> setPort8082_request  [%d]"), index);
+}
+
+void AProtocolLibrary::setPort8083_request(int32 index, FloorPlanPV seletedPV) {
+
+	if (Port8083_request[index] == true)
+	{
+		Port8083_request[index] = false;
+	}
+	else
+	{
+		Port8083_request[index] = true;
+	}
+	//UE_LOG(LogTemp, Log, TEXT("----------------------> setPort8083_request  [%d]"), index);
+}
+
+void AProtocolLibrary::setPort8083_requestPVAllFalse() {
+
+	Port8083_request.Init(false, 3);
+	//UE_LOG(LogTemp, Log, TEXT("----------------------> setPort8083_request  [%d]"), index);
+}
+
+//void AProtocolLibrary::setPort8081_requestPVAllFalse() {
+//	Port8081_request.Init(false, 7);
+//}
 
 void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 {
@@ -163,24 +227,31 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 			Message += "KI";
 
 			//UE_LOG(LogTemp, Log, TEXT("CO2 Value: %s"), port8081Request.CO2 ? TEXT("true") : TEXT("false"));
-			for (size_t i = 0; i < 7; i++)
+			FString ValueToAdd;
+			for (size_t i = 0; i < Port8081_request.Num(); i++)
 			{
-				FString ValueToAdd = TEXT("0");
-
-				// port8081Request의 각 멤버를 순차적으로 검사
-				switch (i)
-				{
-					case 0: ValueToAdd = port8081Request.CO2 ? TEXT("1") : TEXT("0"); break;
-					case 1: ValueToAdd = port8081Request.O2 ? TEXT("1") : TEXT("0"); break;
-					case 2: ValueToAdd = port8081Request.CO ? TEXT("1") : TEXT("0"); break;
-					case 3: ValueToAdd = port8081Request.TEMP ? TEXT("1") : TEXT("0"); break;
-					case 4: ValueToAdd = port8081Request.VELOCITY ? TEXT("1") : TEXT("0"); break;
-					case 5: ValueToAdd = port8081Request.ACCEL ? TEXT("1") : TEXT("0"); break;
-					case 6: ValueToAdd = port8081Request.FUEL ? TEXT("1") : TEXT("0"); break;
-					default: break;
-				}
+				ValueToAdd = Port8081_request[i] ? TEXT("1") : TEXT("0");
 				Message += ValueToAdd;
 			}
+
+			//for (size_t i = 0; i < 7; i++)
+			//{
+			//	FString ValueToAdd = TEXT("0");
+
+			//	// port8081Request의 각 멤버를 순차적으로 검사
+			//	switch (i)
+			//	{
+			//		case 0: ValueToAdd = port8081Request.CO2 ? TEXT("1") : TEXT("0"); break;
+			//		case 1: ValueToAdd = port8081Request.O2 ? TEXT("1") : TEXT("0"); break;
+			//		case 2: ValueToAdd = port8081Request.CO ? TEXT("1") : TEXT("0"); break;
+			//		case 3: ValueToAdd = port8081Request.TEMP ? TEXT("1") : TEXT("0"); break;
+			//		case 4: ValueToAdd = port8081Request.VELOCITY ? TEXT("1") : TEXT("0"); break;
+			//		case 5: ValueToAdd = port8081Request.ACCEL ? TEXT("1") : TEXT("0"); break;
+			//		case 6: ValueToAdd = port8081Request.FUEL ? TEXT("1") : TEXT("0"); break;
+			//		default: break;
+			//	}
+			//	Message += ValueToAdd;
+			//}
 
 			//LO
 			Message += "LO";
@@ -207,30 +278,46 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 			// 수신된 데이터의 크기에 맞춰 문자열 변환
 			FString ReceivedMessage = ReceiveData(Socket);
 			UE_LOG(LogTemp, Log, TEXT("Received from server: %s"), *ReceivedMessage);
+
+			if (ReceivedMessage.Contains(TEXT("None"))) // None일 때
+			{
+				if (!port8081ResponseAnswer.IsEmpty())
+					port8081ResponseAnswer.Empty();
+			}
+			else //PV값이 있을 때
+			{
+				ParshingResponsePort8081(ReceivedMessage);
+			}
 		}
 		else if (Port == 8082)
 		{
 			FString Message; // 	 = TEXT("Message to Server 2");
 			//KI
 			Message += "KI";
-			for (size_t i = 0; i < 7; i++) // 중복 가능
+			FString ValueToAdd;
+			for (size_t i = 0; i < Port8082_request.Num(); i++)
 			{
-				FString ValueToAdd = TEXT("0");
-
-				// port8081Request의 각 멤버를 순차적으로 검사
-				switch (i)
-				{
-					case 0: ValueToAdd = port8082Request.CO2 ? TEXT("1") : TEXT("0"); break;
-					case 1: ValueToAdd = port8082Request.O2 ? TEXT("1") : TEXT("0"); break;
-					case 2: ValueToAdd = port8082Request.CO ? TEXT("1") : TEXT("0"); break;
-					case 3: ValueToAdd = port8082Request.TEMP ? TEXT("1") : TEXT("0"); break;
-					case 4: ValueToAdd = port8082Request.VELOCITY ? TEXT("1") : TEXT("0"); break;
-					case 5: ValueToAdd = port8082Request.ACCEL ? TEXT("1") : TEXT("0"); break;
-					case 6: ValueToAdd = port8082Request.FUEL ? TEXT("1") : TEXT("0"); break;
-					default: break;
-				}
+				ValueToAdd = Port8082_request[i] ? TEXT("1") : TEXT("0");
 				Message += ValueToAdd;
 			}
+			//for (size_t i = 0; i < 7; i++) // 중복 가능
+			//{
+			//	FString ValueToAdd = TEXT("0");
+
+			//	// port8081Request의 각 멤버를 순차적으로 검사
+			//	switch (i)
+			//	{
+			//		case 0: ValueToAdd = port8082Request.CO2 ? TEXT("1") : TEXT("0"); break;
+			//		case 1: ValueToAdd = port8082Request.O2 ? TEXT("1") : TEXT("0"); break;
+			//		case 2: ValueToAdd = port8082Request.CO ? TEXT("1") : TEXT("0"); break;
+			//		case 3: ValueToAdd = port8082Request.TEMP ? TEXT("1") : TEXT("0"); break;
+			//		case 4: ValueToAdd = port8082Request.VELOCITY ? TEXT("1") : TEXT("0"); break;
+			//		case 5: ValueToAdd = port8082Request.ACCEL ? TEXT("1") : TEXT("0"); break;
+			//		case 6: ValueToAdd = port8082Request.FUEL ? TEXT("1") : TEXT("0"); break;
+			//		default: break;
+			//	}
+			//	Message += ValueToAdd;
+			//}
 
 
 			//LO
@@ -269,24 +356,30 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 			FString Message; // 	 = TEXT("Message to Server 2");
 			//KI
 			Message += "KI";
-			for (size_t i = 0; i < 7; i++)
+			FString ValueToAddKI;
+			for (size_t i = 0; i < Port8081_request.Num(); i++)
 			{
-				FString ValueToAdd = TEXT("0");
-
-				// port8081Request의 각 멤버를 순차적으로 검사
-				switch (i)
-				{
-					case 0: ValueToAdd = port8081Request.CO2 ? TEXT("1") : TEXT("0"); break;
-					case 1: ValueToAdd = port8081Request.O2 ? TEXT("1") : TEXT("0"); break;
-					case 2: ValueToAdd = port8081Request.CO ? TEXT("1") : TEXT("0"); break;
-					case 3: ValueToAdd = port8081Request.TEMP ? TEXT("1") : TEXT("0"); break;
-					case 4: ValueToAdd = port8081Request.VELOCITY ? TEXT("1") : TEXT("0"); break;
-					case 5: ValueToAdd = port8081Request.ACCEL ? TEXT("1") : TEXT("0"); break;
-					case 6: ValueToAdd = port8081Request.FUEL ? TEXT("1") : TEXT("0"); break;
-					default: break;
-				}
-				Message += ValueToAdd;
+				ValueToAddKI = Port8081_request[i] ? TEXT("1") : TEXT("0");
+				Message += ValueToAddKI;
 			}
+			//for (size_t i = 0; i < 7; i++)
+			//{
+			//	FString ValueToAdd = TEXT("0");
+
+			//	// port8081Request의 각 멤버를 순차적으로 검사
+			//	switch (i)
+			//	{
+			//		case 0: ValueToAdd = port8081Request.CO2 ? TEXT("1") : TEXT("0"); break;
+			//		case 1: ValueToAdd = port8081Request.O2 ? TEXT("1") : TEXT("0"); break;
+			//		case 2: ValueToAdd = port8081Request.CO ? TEXT("1") : TEXT("0"); break;
+			//		case 3: ValueToAdd = port8081Request.TEMP ? TEXT("1") : TEXT("0"); break;
+			//		case 4: ValueToAdd = port8081Request.VELOCITY ? TEXT("1") : TEXT("0"); break;
+			//		case 5: ValueToAdd = port8081Request.ACCEL ? TEXT("1") : TEXT("0"); break;
+			//		case 6: ValueToAdd = port8081Request.FUEL ? TEXT("1") : TEXT("0"); break;
+			//		default: break;
+			//	}
+			//	Message += ValueToAdd;
+			//}
 
 			//TN
 			Message += "TN";
@@ -299,20 +392,26 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 
 			//AX 
 			Message += "AX";
-			for (size_t i = 0; i < 3; i++)
+			for (size_t i = 0; i < this->Port8083_request.Num(); i++)
 			{
 				FString ValueToAdd = TEXT("0");
-
-				// port8081Request의 각 멤버를 순차적으로 검사
-				switch (i)
-				{
-				case 0: ValueToAdd = port8083Request.X ? TEXT("1") : TEXT("0"); break;
-				case 1: ValueToAdd = port8083Request.Y ? TEXT("1") : TEXT("0"); break;
-				case 2: ValueToAdd = port8083Request.Z ? TEXT("1") : TEXT("0"); break;
-				default: break;
-				}
+				ValueToAdd = Port8083_request[i] ? TEXT("1") : TEXT("0");
 				Message += ValueToAdd;
 			}
+			//for (size_t i = 0; i < 3; i++)
+			//{
+			//	FString ValueToAdd = TEXT("0");
+
+			//	// port8081Request의 각 멤버를 순차적으로 검사
+			//	switch (i)
+			//	{
+			//	case 0: ValueToAdd = port8083Request.X ? TEXT("1") : TEXT("0"); break;
+			//	case 1: ValueToAdd = port8083Request.Y ? TEXT("1") : TEXT("0"); break;
+			//	case 2: ValueToAdd = port8083Request.Z ? TEXT("1") : TEXT("0"); break;
+			//	default: break;
+			//	}
+			//	Message += ValueToAdd;
+			//}
 
 			const TCHAR* SerializedChar = *Message;
 			int32 Size = FCString::Strlen(SerializedChar) + 1;

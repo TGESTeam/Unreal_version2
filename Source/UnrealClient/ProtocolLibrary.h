@@ -93,14 +93,28 @@ public:
 	//------------------------------------
 
 	//Port8083 Request
+
+	   // 뮤텍스 멤버 추가
+	FCriticalSection Mutex;
+	FCriticalSection Mutex2;
+	bool shouldTriggerEvent = false; // 이벤트 트리거 플래그
+
+	int32 CompletedIterations = 0; // 순회 완료 횟수 카운터
+	static const int32 MaxIterations = 10000; // 최대 순회 값
+
 	TArray<bool> Port8083_request;
 	void setPort8083_request(int32 index, FloorPlanPV seletedPV);
 	void setPort8083_requestPVAllFalse();
 
+	int32 UpdateCounter; // 업데이트 카운터
+
 
 	//Port8083 농도값
+	int32 checkSetImageColorBtn;
 	TArray<double> port8083ResponseAnswer;
 	TArray<double> port8083Answer;
+	//FEvent* AnswerSizeReachedEvent; // 이벤트 포인터 선언
+
 	void ParshingResponsePort8083(FString& ReceivedMessage);
 	FLinearColor GetLienarColor(double& density, int32 selectedPVIndex);
 	FLinearColor SetColorWhiteToRedCrossSection(double& density, bool reverse = false);

@@ -3,11 +3,15 @@
 
 #include "AllStateWidgetBFL.h"
 #include "Engine/World.h"
+#include "TimerManager.h"
 #include "Engine/Engine.h"
 
 double UAllStateWidgetBFL::StartTime;
 double UAllStateWidgetBFL::changeTime;
-
+int UAllStateWidgetBFL::indexport8083Answer;
+FTimerHandle UAllStateWidgetBFL::ZTimerHandle;
+FTimerHandle UAllStateWidgetBFL::YTimerHandle;
+int32 UAllStateWidgetBFL::SetImageColorBtn;
 
 void UAllStateWidgetBFL::SetNowPVData(UObject* WorldContextObject, KindPV selectedPV) {
 
@@ -216,92 +220,51 @@ void UAllStateWidgetBFL::SetImageColor(UObject* WorldContextObject, UImage* Imag
 
 		AProtocolLibrary* ProtocolLibraryInstance = AProtocolLibrary::GetInstance(World);
 
-		if (!ProtocolLibraryInstance->port8083Answer.IsEmpty())
-		{
-				// 제일 앞에 있는 요소 값을 저장
-				double firstElement = ProtocolLibraryInstance->port8083Answer[0];
+		Image->SetColorAndOpacity(NewColor);
 
-				// 제일 앞에 있는 요소 삭제
-				ProtocolLibraryInstance->port8083Answer.RemoveAt(0);
-
-				// firstElement를 여기서 사용
-				FLinearColor KindPVColor = ProtocolLibraryInstance->GetLienarColor(firstElement, ProtocolLibraryInstance->SelectedValue);
-				Image->SetColorAndOpacity(NewColor);
-		}
-		else
-		{
-			// Image 위젯의 Brush Tint Color를 변경 -> 빨간색이 들어옴
-			Image->SetColorAndOpacity(NewColor);
-		}
 	} 
 }
 
-void UAllStateWidgetBFL::SetImageColorNextBtn(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor)
+void UAllStateWidgetBFL::SetImageColorNextBtn(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor, int32 index, FloorPlanPV seletedPV)
 {
+	if (!Image || !WorldContextObject) return;
 
-	if (Image)
+	UWorld* World = WorldContextObject->GetWorld();
+	if (!World) return;
+
+	AProtocolLibrary* ProtocolLibraryInstance = AProtocolLibrary::GetInstance(World);
+	if (!ProtocolLibraryInstance) return;
+
+	if (SetImageColorBtn >= 10000)
 	{
-		//UE_LOG(LogTemp, Log, TEXT("NewColor: R=%f, G=%f, B=%f, A=%f"), NewColor.R, NewColor.G, NewColor.B, NewColor.A);
-
-		if (!WorldContextObject) return;
-
-		UWorld* World = WorldContextObject->GetWorld();
-		if (!World) return;
-
-		AProtocolLibrary* ProtocolLibraryInstance = AProtocolLibrary::GetInstance(World);
-		if (!ProtocolLibraryInstance) return;
-
-		// 타이머 설정
-		FTimerHandle TimerHandle;
-		World->GetTimerManager().SetTimer(
-			TimerHandle,
-			[WorldContextObject, Image, NewColor]()
-		{
-			UAllStateWidgetBFL::CheckResponseAndSetColor(WorldContextObject, Image, NewColor);
-		},
-			5.0f, // 0.1초 간격
-			false // 반복 실행
-		);
+		return;
 	}
-	//if (Image)
-	//{
-	//	//UE_LOG(LogTemp, Log, TEXT("NewColor: R=%f, G=%f, B=%f, A=%f"), NewColor.R, NewColor.G, NewColor.B, NewColor.A);
 
-	//	if (!WorldContextObject) return;
+	ProtocolLibraryInstance->shouldTriggerEvent = true;
 
-	//	UWorld* World = WorldContextObject->GetWorld();
-	//	if (!World) return;
+	// 타이머를 사용하여 주기적으로 비동기 작업 수행
+	FTimerHandle TimerHandle;
+	World->GetTimerManager().SetTimer(
+		TimerHandle,
+		[WorldContextObject, Image, NewColor, index]()
+	{
+		// 백그라운드 스레드에서 필요한 작업 수행
+		AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [WorldContextObject, Image, NewColor, index]()
+		{
+			//UE_LOG(LogTemp, Log, TEXT("DEBUG : AsyncTask %d"), index);
 
-	//	AProtocolLibrary* ProtocolLibraryInstance = AProtocolLibrary::GetInstance(World);
-	//	if (!ProtocolLibraryInstance) return;
+			UAllStateWidgetBFL::MonitorPort8083Answer(WorldContextObject, Image, NewColor, index);
+		});
+	},
+		0.2f,
+		true 
+	);
 
-	//	// 타이머 핸들 생성
-	//	FTimerHandle TimerHandle;
-	//	World->GetTimerManager().SetTimer(
-	//		TimerHandle,
-	//		[WorldContextObject, Image, NewColor, &TimerHandle]()
-	//	{
-	//		bool bShouldStop = UAllStateWidgetBFL::CheckResponseAndSetColor(WorldContextObject, Image, NewColor);
-
-	//		// KindPVColor로 색이 설정되었다면 타이머 중지
-	//		if (bShouldStop)
-	//		{
-	//			UWorld* World = WorldContextObject->GetWorld();
-	//			if (World)
-	//			{
-	//				World->GetTimerManager().ClearTimer(TimerHandle);
-	//			}
-	//		}
-	//	},
-	//		6.0f, // 0.1초 간격
-	//		true // 반복 실행
-	//	);
-	//}
-
+	SetImageColorBtn++;
 }
 
 
-void UAllStateWidgetBFL::CheckResponseAndSetColor(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor)
+void UAllStateWidgetBFL::MonitorPort8083Answer(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor, int32 index)
 {
 	if (!WorldContextObject || !Image) return;
 
@@ -311,30 +274,174 @@ void UAllStateWidgetBFL::CheckResponseAndSetColor(UObject* WorldContextObject, U
 	AProtocolLibrary* ProtocolLibraryInstance = AProtocolLibrary::GetInstance(World);
 	if (!ProtocolLibraryInstance) return;
 
-	if (!ProtocolLibraryInstance->port8083Answer.IsEmpty())
 	{
-		// 값이 존재할 때 타이머를 중지
-		World->GetTimerManager().ClearAllTimersForObject(WorldContextObject);
+		FScopeLock Lock(&ProtocolLibraryInstance->Mutex); 
+		if (!ProtocolLibraryInstance->port8083Answer.IsEmpty())
+		{
+			//UE_LOG(LogTemp, Log, TEXT("DEBUG : MonitorPort8083Answer"));
+			UAllStateWidgetBFL::CheckResponseAndSetColor(WorldContextObject, Image, NewColor, index);
 
-		// 제일 앞에 있는 요소 값을 저장
-		double firstElement = ProtocolLibraryInstance->port8083Answer[0];
+			ProtocolLibraryInstance->CompletedIterations++; 
 
-		// 제일 앞에 있는 요소 삭제
-		ProtocolLibraryInstance->port8083Answer.RemoveAt(0);
-
-		// firstElement를 사용하여 색상 설정
-		FLinearColor KindPVColor = ProtocolLibraryInstance->GetLienarColor(firstElement, ProtocolLibraryInstance->SelectedValue);
-		Image->SetColorAndOpacity(KindPVColor);
-	}
-	else
-	{
-		// 아직 값이 없으면 대기
-		Image->SetColorAndOpacity(NewColor); // 초기 색상 설정
+			if (ProtocolLibraryInstance->CompletedIterations >= AProtocolLibrary::MaxIterations)
+			{
+				ProtocolLibraryInstance->CompletedIterations = 0; 
+				ProtocolLibraryInstance->port8083Answer.RemoveAt(0, 10000, false); 
+			}
+		}
 	}
 }
 
+bool UAllStateWidgetBFL::CheckResponseAndSetColor(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor, int32 index)
+{
+	if (!WorldContextObject || !Image) return false;
 
-//bool UAllStateWidgetBFL::CheckResponseAndSetColor(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor)
+	UWorld* World = WorldContextObject->GetWorld();
+	if (!World) return false;
+
+	AProtocolLibrary* ProtocolLibraryInstance = AProtocolLibrary::GetInstance(World);
+	if (!ProtocolLibraryInstance) return false;
+
+	FScopeLock Lock(&ProtocolLibraryInstance->Mutex2); // 잠금 추가
+
+	if (ProtocolLibraryInstance->port8083Answer.IsValidIndex(index))
+	{
+		//UE_LOG(LogTemp, Log, TEXT("DEBUG : CheckResponseAndSetColor"));
+		double firstElement = ProtocolLibraryInstance->port8083Answer[index];
+
+		FLinearColor KindPVColor = ProtocolLibraryInstance->GetLienarColor(firstElement, ProtocolLibraryInstance->SelectedValue);
+
+		if (Image->ColorAndOpacity != KindPVColor)
+		{
+			AsyncTask(ENamedThreads::GameThread, [Image, KindPVColor]()
+			{
+				if (Image)
+				{
+					Image->SetColorAndOpacity(KindPVColor);
+				}
+			});
+		}
+
+		return false;  // 색상이 변경되었으므로 반복 중지
+	}
+	else
+	{
+		//UE_LOG(LogTemp, Log, TEXT("DEBUG : CheckResponseAndSetColor2"));
+		AsyncTask(ENamedThreads::GameThread, [Image, NewColor]()
+		{
+			if (Image && Image->ColorAndOpacity != NewColor)
+			{
+				Image->SetColorAndOpacity(NewColor);
+			}
+		});
+	}
+
+	return false;  // 색상이 변경되지 않았으므로 반복 계속
+}
+
+
+
+
+// ---- 최종 ----
+//void UAllStateWidgetBFL::SetImageColorNextBtn(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor, int32 index, FloorPlanPV seletedPV)
+//{
+//
+//	if (!Image || !WorldContextObject) return;
+//
+//	UWorld* World = WorldContextObject->GetWorld();
+//	if (!World) return;
+//
+//	AProtocolLibrary* ProtocolLibraryInstance = AProtocolLibrary::GetInstance(World);
+//	if (!ProtocolLibraryInstance) return;
+//
+//	if (SetImageColorBtn >= 10000 )
+//	{
+//		return;
+//	}
+//	ProtocolLibraryInstance->shouldTriggerEvent = true;
+//	
+//	//UE_LOG(LogTemp, Log, TEXT("DEBUG : SetImageColorNextBtn"));
+//	//UE_LOG(LogTemp, Log, TEXT("button SetImageColorBtn. %d"), SetImageColorBtn);
+//	//else if (SetImageColorBtn != -1 && bButtonPressed)
+//	//{
+//	//	return; 
+//	//}
+//	//UE_LOG(LogTemp, Log, TEXT("----> click UpdateTextBlock"));
+//	
+//	
+//	// 버튼이 이미 눌린 상태라면 함수 실행 중단
+//	//if (bButtonPressed && index == 9999)
+//	//{
+//	//	UE_LOG(LogTemp, Log, TEXT("button pressed."));
+//	//	return;
+//	//}
+//	
+//	FTimerHandle TimerHandle;
+//	//if (World->GetTimerManager().IsTimerActive(TimerHandle))
+//	//{
+//	//	// Z 타이머가 이미 활성 상태라면 아래 코드를 실행하지 않음
+//	//	UE_LOG(LogTemp, Log, TEXT("Zstop Timer"));
+//	//	return;
+//	//}
+//
+//	//UE_LOG(LogTemp, Log, TEXT("----> SetImageColorNextBtn : %d ---> %d"), index, (int32) seletedPV);
+//	// 타이머 핸들 생성
+//
+//	World->GetTimerManager().SetTimer(
+//		TimerHandle,
+//		[WorldContextObject, Image, NewColor, &TimerHandle, index]()
+//	{
+//		// 주기적으로 port8083Answer 값을 감시
+//		UAllStateWidgetBFL::MonitorPort8083Answer(WorldContextObject, Image, NewColor, index);
+//	},
+//		0.98765f, // 1초마다 감시
+//		true  // 반복 실행
+//	);
+//
+//	//SetImageColorBtn++;
+//	//ProtocolLibraryInstance->checkSetImageColorBtn++;
+//	SetImageColorBtn++;
+//
+//}
+//
+//
+//void UAllStateWidgetBFL::MonitorPort8083Answer(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor, int32 index)
+//{
+//	if (!WorldContextObject || !Image) return;
+//
+//	UWorld* World = WorldContextObject->GetWorld();
+//	if (!World) return;
+//
+//	AProtocolLibrary* ProtocolLibraryInstance = AProtocolLibrary::GetInstance(World);
+//	if (!ProtocolLibraryInstance) return;
+//
+//	// port8083Answer의 길이가 10,000이 될 때까지 대기
+//	//ProtocolLibraryInstance->AnswerSizeReachedEvent->Wait();
+//
+//	// Critical section 시작
+//	{
+//		FScopeLock Lock(&ProtocolLibraryInstance->Mutex); // 잠금
+//		if (!ProtocolLibraryInstance->port8083Answer.IsEmpty())
+//		{
+//			//UE_LOG(LogTemp, Log, TEXT("DEBUG : MonitorPort8083Answer out : %d"), index);
+//			UAllStateWidgetBFL::CheckResponseAndSetColor(WorldContextObject, Image, NewColor, index);
+//
+//			ProtocolLibraryInstance->CompletedIterations++; // 순회 완료 카운터 증가
+//
+//			if (ProtocolLibraryInstance->CompletedIterations >= AProtocolLibrary::MaxIterations)
+//			{
+//				ProtocolLibraryInstance->CompletedIterations = 0; // 카운터 초기화
+//				ProtocolLibraryInstance->port8083Answer.RemoveAt(0, 10000, false); // port8083Answer 초기화
+//				//UE_LOG(LogTemp, Log, TEXT("DEBUG : All iterations complete, resetting arrays."));
+//			}
+//		}
+//	} // 잠금 해제
+//}
+//
+//
+//
+//
+//bool UAllStateWidgetBFL::CheckResponseAndSetColor(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor, int32 index)
 //{
 //	if (!WorldContextObject || !Image) return false;
 //
@@ -344,44 +451,39 @@ void UAllStateWidgetBFL::CheckResponseAndSetColor(UObject* WorldContextObject, U
 //	AProtocolLibrary* ProtocolLibraryInstance = AProtocolLibrary::GetInstance(World);
 //	if (!ProtocolLibraryInstance) return false;
 //
-//	if (!ProtocolLibraryInstance->port8083Answer.IsEmpty())
+//	FScopeLock Lock(&ProtocolLibraryInstance->Mutex2); // 잠금 추가
+//
+//	if (ProtocolLibraryInstance->port8083Answer.IsValidIndex(index))
 //	{
-//		// 제일 앞에 있는 요소 값을 저장
-//		double firstElement = ProtocolLibraryInstance->port8083Answer[0];
+//		//UE_LOG(LogTemp, Log, TEXT("DEBUG : CheckResponseAndSetColor IsValidIndex : %d"), index);
 //
-//		// 제일 앞에 있는 요소 삭제
-//		ProtocolLibraryInstance->port8083Answer.RemoveAt(0);
+//		double firstElement = ProtocolLibraryInstance->port8083Answer[index];
+//		//UE_LOG(LogTemp, Log, TEXT("DEBUG : CheckResponseAndSetColor firstElement : %lf"), firstElement);
 //
-//		// firstElement를 사용하여 색상 설정
 //		FLinearColor KindPVColor = ProtocolLibraryInstance->GetLienarColor(firstElement, ProtocolLibraryInstance->SelectedValue);
-//		//UE_LOG(LogTemp, Log, TEXT("KindPVColor: R=%f, G=%f, B=%f, A=%f"), KindPVColor.R, KindPVColor.G, KindPVColor.B, KindPVColor.A);
-//		Image->SetColorAndOpacity(KindPVColor);
 //
-//		// 색상이 설정되었으므로 반복 중지
-//		return true;
+//		if (Image->ColorAndOpacity != KindPVColor)
+//		{
+//			//UE_LOG(LogTemp, Log, TEXT("DEBUG : CheckResponseAndSetColor Image->ColorAndOpacity in "));
+//			Image->SetColorAndOpacity(KindPVColor);
+//			//UE_LOG(LogTemp, Log, TEXT("DEBUG : CheckResponseAndSetColor Image->ColorAndOpacity out "));
+//		}
+//
+//		return false;  // 색상이 변경되었으므로 반복 중지
 //	}
 //	else
 //	{
-//		// 아직 값이 없으면 대기, 초기 색상 설정
-//		Image->SetColorAndOpacity(NewColor);
-//	}
-//
-//	return false;
-//}
-
-//void UAllStateWidgetBFL::SetImagesColor(const TArray<UImage*>& Images)
-//{
-//	FLinearColor RedColor = FLinearColor::Red;  // 빨간색 정의
-//
-//	// 배열에 있는 모든 Image 위젯의 색상을 빨간색으로 변경
-//	for (UImage* Image : Images)
-//	{
-//		if (Image)
+//		if (Image->ColorAndOpacity != NewColor)
 //		{
-//			Image->SetColorAndOpacity(RedColor);
+//			Image->SetColorAndOpacity(NewColor);
 //		}
 //	}
+//
+//	return false;  // 색상이 변경되지 않았으므로 반복 계속
 //}
+
+
+//-------------------------------
 
 void UAllStateWidgetBFL::UpdateTimeTextBlock(AUnrealClientCharacter* PlayerCharacter, UObject* WorldContextObject, UTextBlock* TextBlock)
 {
@@ -428,6 +530,8 @@ void UAllStateWidgetBFL::InitializeTime()
 
 	StartTime = FPlatformTime::Seconds();
 	changeTime = 0.0f;
+	indexport8083Answer = 0;
+	SetImageColorBtn = 0;
 }
 
 

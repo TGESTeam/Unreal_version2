@@ -80,10 +80,11 @@ class UNREALCLIENT_API UAllStateWidgetBFL : public UBlueprintFunctionLibrary
 
 	// 여러 Image 위젯의 색상을 빨간색으로 변경하는 함수
 	UFUNCTION(BlueprintCallable, Category = "WidgetOperations")
-	static void SetImageColorNextBtn(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor);
+	static void SetImageColorNextBtn(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor, int32 index, FloorPlanPV seletedPV);
 
-	static void CheckResponseAndSetColor(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor);
+	static bool CheckResponseAndSetColor(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor, int32 index);
 
+	static void MonitorPort8083Answer(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor, int32 index);
 
 	UFUNCTION(BlueprintCallable, Category = "WidgetOperations") //현재 시간 업데이트
 		static void UpdateTimeTextBlock(AUnrealClientCharacter* PlayerCharacter, UObject* WorldContextObject, UTextBlock* TextBlock);
@@ -100,4 +101,9 @@ class UNREALCLIENT_API UAllStateWidgetBFL : public UBlueprintFunctionLibrary
 private:
 	static double StartTime;
 	static double changeTime;
+	static int32 indexport8083Answer;
+	//static FTimerHandle ColorUpdateTimerHandle;
+	static FTimerHandle ZTimerHandle;
+	static FTimerHandle YTimerHandle;
+	static int32 SetImageColorBtn;
 };

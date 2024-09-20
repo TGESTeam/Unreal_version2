@@ -190,16 +190,18 @@ void AProtocolLibrary::ParshingResponsePort8081(FString& ReceivedMessage)
 		this->port8081ResponseAnswer.Add(value);
 	}
 }
+
 void AProtocolLibrary::ParshingResponsePort8083(FString& ReceivedMessage)
 {
-	UE_LOG(LogTemp, Log, TEXT("DEBUG : ParshingResponsePort8083"));
+	//UE_LOG(LogTemp, Log, TEXT("DEBUG : ParshingResponsePort8083"));
 
 	TArray<FString> stringArray;
 	ReceivedMessage.ParseIntoArray(stringArray, TEXT(","), true);
 
-	// 잠금을 통해 배열에 안전하게 접근합니다.
 	{
-		FScopeLock Lock(&Mutex);
+		FScopeLock Lock(&Mutex); // port8083ResponseAnswer에 접근하기 전에 락을 사용합니다.
+
+		// 받은 메시지를 처리하여 배열에 추가
 		for (const FString& str : stringArray)
 		{
 			double value = FCString::Atod(*str);
@@ -207,31 +209,80 @@ void AProtocolLibrary::ParshingResponsePort8083(FString& ReceivedMessage)
 		}
 	}
 
-	// 초기화 플래그 설정
 	bool bInitialized = false;
 
-	//{
-		//FScopeLock Lock(&Mutex); // port8083Answer 초기화 중에 락 사용
-		if (this->port8083Answer.IsEmpty() || CompletedIterations == 0)
+	{
+		FScopeLock Lock(&Mutex); // port8083Answer에 접근하기 전 락을 사용합니다.
+
+		// 배열 크기를 확인하여 안전하게 접근
+		if (this->port8083ResponseAnswer.Num() >= 10000 && this->port8083Answer.IsEmpty() && CompletedIterations == 0)
 		{
 			// port8083ResponseAnswer에서 처음 10,000개의 값을 port8083Answer로 복사
 			for (int32 i = 0; i < 10000; ++i)
 			{
-				this->port8083Answer.Add(this->port8083ResponseAnswer[i]);
+				if (this->port8083ResponseAnswer.IsValidIndex(i)) // 인덱스 유효성 검사
+				{
+					this->port8083Answer.Add(this->port8083ResponseAnswer[i]);
+				}
 			}
+
+			// port8083ResponseAnswer 배열에서 복사한 값을 제거
 			this->port8083ResponseAnswer.RemoveAt(0, 10000, false);
-			bInitialized = true; 
+			bInitialized = true;
 		}
-	//}
+	}
 
 	if (bInitialized)
 	{
 		AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [this]()
 		{
-			UE_LOG(LogTemp, Log, TEXT("DEBUG : MonitorPort8083Answer Task Triggered"));
+			//UE_LOG(LogTemp, Log, TEXT("DEBUG : MonitorPort8083Answer Task Triggered"));
 		});
 	}
 }
+
+//void AProtocolLibrary::ParshingResponsePort8083(FString& ReceivedMessage)
+//{
+//	UE_LOG(LogTemp, Log, TEXT("DEBUG : ParshingResponsePort8083"));
+//
+//	TArray<FString> stringArray;
+//	ReceivedMessage.ParseIntoArray(stringArray, TEXT(","), true);
+//
+//	// 잠금을 통해 배열에 안전하게 접근합니다.
+//	{
+//		FScopeLock Lock(&Mutex);
+//		for (const FString& str : stringArray)
+//		{
+//			double value = FCString::Atod(*str);
+//			this->port8083ResponseAnswer.Add(value);
+//		}
+//	}
+//
+//	// 초기화 플래그 설정
+//	bool bInitialized = false;
+//
+//	//{
+//		//FScopeLock Lock(&Mutex); // port8083Answer 초기화 중에 락 사용
+//		if (this->port8083Answer.IsEmpty() || CompletedIterations == 0)
+//		{
+//			// port8083ResponseAnswer에서 처음 10,000개의 값을 port8083Answer로 복사
+//			for (int32 i = 0; i < 10000; ++i)
+//			{
+//				this->port8083Answer.Add(this->port8083ResponseAnswer[i]);
+//			}
+//			this->port8083ResponseAnswer.RemoveAt(0, 10000, false);
+//			bInitialized = true; 
+//		}
+//	//}
+//
+//	if (bInitialized)
+//	{
+//		AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [this]()
+//		{
+//			UE_LOG(LogTemp, Log, TEXT("DEBUG : MonitorPort8083Answer Task Triggered"));
+//		});
+//	}
+//}
 
 
 
@@ -522,9 +573,13 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 
 			//LO
 			Message += "LO";
-			Message += FString::Printf(TEXT("%lf"), PlayerLocation.X) + "," \
-				+ FString::Printf(TEXT("%lf"), PlayerLocation.Y) + "," \
-				+ FString::Printf(TEXT("%lf"), PlayerLocation.Z);
+			//Message += FString::Printf(TEXT("%lf"), PlayerLocation.X) + "," \
+			//	+ FString::Printf(TEXT("%lf"), PlayerLocation.Y) + "," \
+			//	+ FString::Printf(TEXT("%lf"), PlayerLocation.Z);
+			Message += FString::Printf(TEXT("%d"),port8082X) + "," \
+				+ FString::Printf(TEXT("%d"), port8082Y) + "," \
+				+ FString::Printf(TEXT("%d"), port8082Z);
+			
 			//TI
 			Message += "TI";
 			FTimespan NewTime = CurrentTime + FTimespan::FromSeconds(0.1);

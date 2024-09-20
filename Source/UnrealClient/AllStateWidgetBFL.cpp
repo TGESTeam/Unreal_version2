@@ -274,23 +274,52 @@ void UAllStateWidgetBFL::MonitorPort8083Answer(UObject* WorldContextObject, UIma
 	AProtocolLibrary* ProtocolLibraryInstance = AProtocolLibrary::GetInstance(World);
 	if (!ProtocolLibraryInstance) return;
 
+	FScopeLock Lock(&ProtocolLibraryInstance->Mutex);
+
+	// 배열 크기가 충분한지 확인
+	if (ProtocolLibraryInstance->port8083Answer.IsValidIndex(0))
 	{
-		FScopeLock Lock(&ProtocolLibraryInstance->Mutex); 
-		if (!ProtocolLibraryInstance->port8083Answer.IsEmpty())
+		// 데이터 처리 로직 수행
+		UAllStateWidgetBFL::CheckResponseAndSetColor(WorldContextObject, Image, NewColor, index);
+
+		ProtocolLibraryInstance->CompletedIterations++;
+
+		// 반복이 일정 횟수 초과 시 배열에서 데이터 제거
+		if (ProtocolLibraryInstance->CompletedIterations >= AProtocolLibrary::MaxIterations)
 		{
-			//UE_LOG(LogTemp, Log, TEXT("DEBUG : MonitorPort8083Answer"));
-			UAllStateWidgetBFL::CheckResponseAndSetColor(WorldContextObject, Image, NewColor, index);
-
-			ProtocolLibraryInstance->CompletedIterations++; 
-
-			if (ProtocolLibraryInstance->CompletedIterations >= AProtocolLibrary::MaxIterations)
-			{
-				ProtocolLibraryInstance->CompletedIterations = 0; 
-				ProtocolLibraryInstance->port8083Answer.RemoveAt(0, 10000, false); 
-			}
+			ProtocolLibraryInstance->CompletedIterations = 0;
+			ProtocolLibraryInstance->port8083Answer.RemoveAt(0, 10000, false); // 배열에서 값 제거
 		}
 	}
 }
+
+//void UAllStateWidgetBFL::MonitorPort8083Answer(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor, int32 index)
+//{
+//	if (!WorldContextObject || !Image) return;
+//
+//	UWorld* World = WorldContextObject->GetWorld();
+//	if (!World) return;
+//
+//	AProtocolLibrary* ProtocolLibraryInstance = AProtocolLibrary::GetInstance(World);
+//	if (!ProtocolLibraryInstance) return;
+//
+//	{
+//		FScopeLock Lock(&ProtocolLibraryInstance->Mutex); 
+//		if (!ProtocolLibraryInstance->port8083Answer.IsEmpty())
+//		{
+//			//UE_LOG(LogTemp, Log, TEXT("DEBUG : MonitorPort8083Answer"));
+//			UAllStateWidgetBFL::CheckResponseAndSetColor(WorldContextObject, Image, NewColor, index);
+//
+//			ProtocolLibraryInstance->CompletedIterations++; 
+//
+//			if (ProtocolLibraryInstance->CompletedIterations >= AProtocolLibrary::MaxIterations)
+//			{
+//				ProtocolLibraryInstance->CompletedIterations = 0; 
+//				ProtocolLibraryInstance->port8083Answer.RemoveAt(0, 10000, false); 
+//			}
+//		}
+//	}
+//}
 
 bool UAllStateWidgetBFL::CheckResponseAndSetColor(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor, int32 index)
 {
@@ -619,8 +648,8 @@ float UAllStateWidgetBFL::GetCurrentLocationOfDensity(AUnrealClientCharacter* Pl
 	float density = 0.0f;
 	//AProtocolLibrary::PutPortDataToOneVar<AUnrealClientCharacter::LocationStatus, float>(PlayerCharacter->CurrentLocationStatus, density, selectedPV);
 
-	density = PlayerCharacter->CurrentLocationStatus[selectedPV];
-	
+	//density = PlayerCharacter->CurrentLocationStatus[selectedPV];
+	density = FMath::RandRange(0.5f, 1.0f);
 	if (changeToPercent) {
 
 	}
@@ -714,5 +743,24 @@ float UAllStateWidgetBFL::GetFutureLocationOfDensity(int32 FutureTime, AUnrealCl
 void UAllStateWidgetBFL::RequestFutureGrpahData(int32 FutureTime, AUnrealClientCharacter* PlayerCharacter) {
 	PlayerCharacter->GetProtocolLibrary()->FutureTimeAlpha = FutureTime;
 	// 다음번 loop에서 미래값을 가져오라고 요청함
+
+}
+
+void UAllStateWidgetBFL::ControlMouse(AUnrealClientCharacter* PlayerCharacter, bool bisVil)
+{
+	UWorld* World = PlayerCharacter->GetWorld();
+
+	APlayerController* Controller = World->GetFirstPlayerController();
+
+	if (!Controller) {
+		return;
+	}
+
+	if (bisVil) {
+		Controller->SetInputMode(FInputModeGameAndUI());
+	}
+	else {
+		Controller->SetInputMode(FInputModeGameOnly());
+	}
 
 }

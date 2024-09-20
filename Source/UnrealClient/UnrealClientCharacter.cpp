@@ -45,7 +45,7 @@ AUnrealClientCharacter::AUnrealClientCharacter()
 
 
 
-	NumX = 85;
+	NumX = 84;
 	NumY = 93;
 	NumZ = 101;
 
@@ -88,12 +88,20 @@ void AUnrealClientCharacter::BeginPlay()
 		CenterIndexX = GridSizeX / 2;
 		CenterIndexY = GridSizeY / 2;
 	}
-	FVector StartLocation = CameraLocation
-		- FVector(CenterIndexX * VoxelSpacingX, CenterIndexY * VoxelSpacingY, 0.0f);  // X, Y 중앙 맞춤
+	//FVector StartLocation = CameraLocation - FVector(CenterIndexX * VoxelSpacingX, CenterIndexY * VoxelSpacingY, 0.0f);  // X, Y 중앙 맞춤
+	FVector StartLocation = FVector(-2370, -4390, -170);
 	StartLocation.Z = 0.0f;  // 땅 높이로 설정
 	
-	UE_LOG(LogTemp, Warning, TEXT("StartLocation : %f , %f, %f"), StartLocation.X, StartLocation.Y, StartLocation.Z);
+	//UE_LOG(LogTemp, Warning, TEXT("StartLocation : %f , %f, %f"), StartLocation.X, StartLocation.Y, StartLocation.Z);
+	//UE_LOG(LogTemp, Warning, TEXT("CameraLocation : %f , %f, %f"), CameraLocation.X, CameraLocation.Y, CameraLocation.Z);
 
+	////FVector s  = FMath::Abs(CameraLocation - FVector(2370, 4390, 170));
+	//FVector s;
+	//s.X = FMath::Abs(CameraLocation.X + 2370);
+	//s.Y = FMath::Abs(CameraLocation.Y + 4390);
+	//s.Z = FMath::Abs(CameraLocation.Z +  170);
+
+	//UE_LOG(LogTemp, Warning, TEXT("s : %f , %f, %f"), s.X/ VoxelSpacingX, s.Y/ VoxelSpacingY, s.Z/ VoxelSpacingZ);
 	// 복셀 생성 및 배열에 저장
 	for (int32 x = 0; x < GridSizeX; ++x)
 	{
@@ -189,7 +197,7 @@ void AUnrealClientCharacter::Tick(float DeltaTime)
 	int32 IndexX = FMath::FloorToInt((CameraLocation.X - GridStartLocation.X) / VoxelSpacingX);
 	int32 IndexY = FMath::FloorToInt((CameraLocation.Y - GridStartLocation.Y) / VoxelSpacingY);
 	int32 IndexZ = FMath::FloorToInt((CameraLocation.Z - GridStartLocation.Z) / VoxelSpacingZ);
-	//UE_LOG(LogTemplateCharacter, Log, TEXT("CenterIndexZ: %d, IndexZ : %d"), CenterIndexZ, IndexZ);
+	//UE_LOG(LogTemplateCharacter, Log, TEXT("IndexX: %d, IndexY : %d IndexZ : %d"), IndexX, IndexY, IndexZ);
 
 
 	// 현재 캐릭터의 Z축 위치 가져오기
@@ -231,7 +239,27 @@ void AUnrealClientCharacter::Tick(float DeltaTime)
 				}
 			}
 		}
+		FVector StartLocation = FVector(-2370, -4390, -170);
+		StartLocation.Z = 0.0f;  // 땅 높이로 설정
 
+		//UE_LOG(LogTemp, Warning, TEXT("StartLocation : %f , %f, %f"), StartLocation.X, StartLocation.Y, StartLocation.Z);
+		//UE_LOG(LogTemp, Warning, TEXT("CameraLocation : %f , %f, %f"), CameraLocation.X, CameraLocation.Y, CameraLocation.Z);
+
+		//FVector s  = FMath::Abs(CameraLocation - FVector(2370, 4390, 170));
+		FVector s;
+		s.X = FMath::Abs(CameraLocation.X + 2370);
+		s.Y = FMath::Abs(CameraLocation.Y + 4390);
+		s.Z = FMath::Abs(CameraLocation.Z + 170);
+		int32 X = FMath::RoundToInt(s.X / VoxelSpacingX);
+		int32 Y = FMath::RoundToInt(s.Y / VoxelSpacingY);
+		int32 Z = FMath::RoundToInt(s.Z / VoxelSpacingZ);
+		if (ProtocolLibraryInstance)
+		{
+			ProtocolLibraryInstance->port8082X = X;
+			ProtocolLibraryInstance->port8082Y = Y;
+			ProtocolLibraryInstance->port8082Z = Z;
+		}
+		//UE_LOG(LogTemp, Warning, TEXT("s : %d , %d, %d"), X, Y, Z);
 		// 플레이어가 다시 X, Y 중앙에 위치하도록 인덱스 조정
 		IndexX = CenterIndexX;
 		IndexY = CenterIndexY;

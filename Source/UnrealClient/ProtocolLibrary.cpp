@@ -11,6 +11,7 @@
 AProtocolLibrary* AProtocolLibrary::Instance = nullptr;
 int32 ActualBufferSize = 0; // 초기값 설정
 
+
 // Sets default values
 AProtocolLibrary::AProtocolLibrary()
 {
@@ -71,10 +72,20 @@ void AProtocolLibrary::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// 8082 데이터를 읽을 index 순서를 나태는 cnt
+	LoopNowGraphCnt = 0;
+	LoopBoxNowGraphCnt = 0;
+	LoopFutureGraphCnt = 0;
+	LoopBoxFutureGraphCnt = 0;
+	LoopArrayFutureGraphCnt = 0;
+	
 	// 세 개의 서버에 연결
 	ConnectToServer(Socket8081, TEXT("127.0.0.1"), 8081);
 	ConnectToServer(Socket8082, TEXT("127.0.0.1"), 8082);
 	ConnectToServer(Socket8083, TEXT("127.0.0.1"), 8083);
+	//ConnectToServer(Socket8081, TEXT("192.168.94.63"), 8081);
+	//ConnectToServer(Socket8082, TEXT("192.168.94.63"), 8082);
+	//ConnectToServer(Socket8083, TEXT("192.168.94.63"), 8083);
 
 	////// 서버가 준비되었는지 확인
 	if ((Socket8081 && Socket8081->GetConnectionState() == SCS_Connected) && \
@@ -126,7 +137,7 @@ void AProtocolLibrary::Tick(float DeltaTime)
 	TimeSinceLastSend += DeltaTime;
 
 	// 2초마다 메시지 전송
-	if (TimeSinceLastSend >= 0.5f)
+	if (TimeSinceLastSend >= 0.4f)
 	{
 		//SendMessageToServer(Socket8081, TEXT("Message to Server 1"));
 		//SendMessageToServer(Socket8082, TEXT("Message to Server 2"));
@@ -190,47 +201,359 @@ void AProtocolLibrary::ParshingResponsePort8081(FString& ReceivedMessage)
 		this->port8081ResponseAnswer.Add(value);
 	}
 }
-void AProtocolLibrary::ParshingResponsePort8083(FString& ReceivedMessage)
-{
-	UE_LOG(LogTemp, Log, TEXT("DEBUG : ParshingResponsePort8083"));
 
-	TArray<FString> stringArray;
-	ReceivedMessage.ParseIntoArray(stringArray, TEXT(","), true);
 
-	// 잠금을 통해 배열에 안전하게 접근합니다.
-	{
-		FScopeLock Lock(&Mutex);
-		for (const FString& str : stringArray)
-		{
-			double value = FCString::Atod(*str);
-			this->port8083ResponseAnswer.Add(value);
-		}
-	}
+void AProtocolLibrary::ParshingResponsePort8082(FString& ReceivedMessage) {
+	//TArray<FString> tempArray;
+	//ReceivedMessage.ParseIntoArray(tempArray, TEXT(","), true);
 
-	// 초기화 플래그 설정
-	bool bInitialized = false;
-
-	//{
-		//FScopeLock Lock(&Mutex); // port8083Answer 초기화 중에 락 사용
-		if (this->port8083Answer.IsEmpty() || CompletedIterations == 0)
-		{
-			// port8083ResponseAnswer에서 처음 10,000개의 값을 port8083Answer로 복사
-			for (int32 i = 0; i < 10000; ++i)
-			{
-				this->port8083Answer.Add(this->port8083ResponseAnswer[i]);
-			}
-			this->port8083ResponseAnswer.RemoveAt(0, 10000, false);
-			bInitialized = true; 
-		}
+	//TArray<double> temp;
+	//for (const FString& str : tempArray) {
+	//	double value = FCString::Atod(*str);
+	//	temp.Add(value);
+	//	UE_LOG(LogTemp, Log, TEXT("Recv Density: %lf | density Str: %s"), value, *str);
 	//}
 
-	if (bInitialized)
-	{
-		AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [this]()
-		{
-			UE_LOG(LogTemp, Log, TEXT("DEBUG : MonitorPort8083Answer Task Triggered"));
-		});
-	}
+	//// 락 프리 큐에 데이터 추가
+	//for (int32 i = 0; i < temp.Num(); i++) {
+	//	if (Port8082_request[0]) {
+	//		this->O2_LocationQueue.Enqueue(temp[i]);
+	//		temp.RemoveAt(0);
+	//		UE_LOG(LogTemp, Log, TEXT("O2_LocationQueue 0"));
+	//	}
+	//	if (Port8082_request[1]) {
+	//		this->CO2_LocationQueue.Enqueue(temp[i]);
+	//		temp.RemoveAt(0);
+	//		UE_LOG(LogTemp, Log, TEXT("CO2_LocationQueue 1"));
+	//	}
+	//	if (Port8082_request[2]) {
+	//		this->CO_LocationQueue.Enqueue(temp[i]);
+	//		temp.RemoveAt(0);
+	//		UE_LOG(LogTemp, Log, TEXT("CO_LocationQueue 2"));
+	//	}
+	//	if (Port8082_request[3]) {
+	//		this->TEMP_LocationQueue.Enqueue(temp[i]);
+	//		temp.RemoveAt(0);
+	//		UE_LOG(LogTemp, Log, TEXT("TEMP_LocationQueue 3"));
+	//	}
+	//	if (Port8082_request[4]) {
+	//		this->VELOCITY_LocationQueue.Enqueue(temp[i]);
+	//		temp.RemoveAt(0);
+	//		UE_LOG(LogTemp, Log, TEXT("VELOCITY_LocationQueue 4"));
+	//	}
+	//	if (Port8082_request[5]) {
+	//		this->ACCEL_LocationQueue.Enqueue(temp[i]);
+	//		temp.RemoveAt(0);
+	//		UE_LOG(LogTemp, Log, TEXT("ACCEL_LocationQueue 5"));
+	//	}
+	//	if (Port8082_request[6]) {
+	//		this->FUEL_LocationQueue.Enqueue(temp[i]);
+	//		temp.RemoveAt(0);
+	//		UE_LOG(LogTemp, Log, TEXT("FUEL_LocationQueue 6"));
+	//	}
+	//}
+}
+//void AProtocolLibrary::ParshingResponsePort8082(FString& ReceivedMessage) {
+//	TArray<FString> tempArray;
+//	ReceivedMessage.ParseIntoArray(tempArray, TEXT(","), true);
+//
+//	TArray<double> temp;
+//	{
+//		FScopeLock Lock(&CriticalSection);
+//		for (const FString& str : tempArray) {
+//			double value = FCString::Atod(*str);
+//			temp.Add(value);
+//			UE_LOG(LogTemp, Log, TEXT("Recv Density: %lf | density Str: %s"), value, *str);
+//		}
+//
+//		if (!temp.IsEmpty())
+//		{
+//			if (this->PredictTime == 0)
+//			{
+//				for (int32 i = 0; i < temp.Num(); i++) {
+//					TCHAR Valid = this->ClickButton[i];
+//
+//					if (Port8082_request[0]) {
+//						{
+//							FScopeLock LockLocation(&CriticalSectionO2_Location);
+//							this->O2_Location.Add(temp[i]);
+//						}
+//						temp.RemoveAt(0);
+//					}
+//					else if (Port8082_request[1]) {
+//						{
+//							FScopeLock LockLocation(&CriticalSectionCO2_Location);
+//							this->Co2_Location.Add(temp[i]);
+//						}
+//						temp.RemoveAt(0);
+//					}
+//				}
+//			}
+//		}
+//		this->PredictCount = 0;
+//	}
+//}
+
+
+//void AProtocolLibrary::ParshingResponsePort8082(FString& ReceivedMessage) {
+//	TArray<FString> tempArray;
+//	ReceivedMessage.ParseIntoArray(tempArray, TEXT(","), true);
+//
+//	TArray<double> temp;
+//	{
+//		FScopeLock Lock(&CriticalSection);
+//		for (const FString& str : tempArray) {
+//			double value = FCString::Atod(*str);
+//			temp.Add(value);
+//			UE_LOG(LogTemp, Log, TEXT("Recv Density: %lf | density Str: %s"), value, *str);
+//		}
+//
+//		if (!temp.IsEmpty())
+//		{
+//			//int32 countToProcess = FMath::Min(this->PredictCount, temp.Num());
+//			//FScopeLock Lock(&CriticalSection);
+//			if (this->PredictTime == 0)
+//			{
+//				//for (int32 i = 0; i < countToProcess; i++) {
+//				//	this->port8082ResponseAnswerCurrentDensity.Add(temp[i]);
+//				//	this->port8082ResponseAnswerLocationOfDensity.Add(temp[i]);
+//				//}
+//				UE_LOG(LogTemp, Log, TEXT(" ---------------------- PredictTime --------------"));
+//				for (int32 i = 0; i < temp.Num(); i++) {
+//					TCHAR Valid = this->ClickButton[i];
+//
+//					UE_LOG(LogTemp, Log, TEXT(" ---------------------- PredictTime -------------- 1111111111"));
+//					if (Port8082_request[0])
+//					{
+//						
+//						this->O2_Location.Add(temp[i]);
+//						this->O2_Current.Add(temp[i]);
+//						temp.RemoveAt(0);
+//					}
+//					else if (Port8082_request[1])
+//					{
+//						UE_LOG(LogTemp, Log, TEXT(" ---------------------- PredictTime -------------- 2222"));
+//						if (Port8082_request[i] && i == 0)
+//						this->Co2_Location.Add(temp[i]);
+//						this->Co2_Current.Add(temp[i]);
+//						temp.RemoveAt(0);
+//					}
+//				}
+//
+//
+//			}
+//		}
+//		this->PredictCount = 0;
+//	}
+//
+//
+//}
+
+// -- 원본--- 
+//void AProtocolLibrary::ParshingResponsePort8082(FString& ReceivedMessage) {
+//	TArray<FString> tempArray;
+//	ReceivedMessage.ParseIntoArray(tempArray, TEXT(","), true);
+//
+//	TArray<double> temp;
+//	{
+//		FScopeLock Lock(&CriticalSection);
+//		for (const FString& str : tempArray) {
+//			double value = FCString::Atod(*str);
+//			temp.Add(value);
+//			UE_LOG(LogTemp, Log, TEXT("Recv Density: %lf | density Str: %s"), value, *str);
+//		}
+//
+//		if (!temp.IsEmpty()) 
+//		{
+//			int32 countToProcess = FMath::Min(this->PredictCount, temp.Num());
+//			//FScopeLock Lock(&CriticalSection);
+//			if (this->PredictTime == 0)
+//			{
+//				for (int32 i = 0; i < countToProcess; i++) {
+//					this->port8082ResponseAnswerCurrentDensity.Add(temp[i]);
+//					this->port8082ResponseAnswerLocationOfDensity.Add(temp[i]);
+//				}
+//
+//			}
+//
+//			//if (ResponseBuffer.Num() >= BufferSizePredictTimeZero) {
+//			////	// 버퍼가 꽉 찼으면 가장 오래된 데이터를 제거
+//			//	ResponseBuffer.RemoveAt(0);
+//			//}
+//			////// 새로 파싱한 데이터를 버퍼에 추가
+//			//ResponseBuffer.Add(temp);
+//
+//			//// 최신 응답을 설정
+//			//port8082ResponseAnswer = temp;
+//		}
+//	}
+//
+//
+//
+//	//if (!temp.IsEmpty() && this->PredictCount >= 1) {
+//	//	FScopeLock Lock(&CriticalSection);
+//
+//	//	if (this->Pr)
+//	//	{
+//
+//	//	}
+//
+//	//	if (ResponseBuffer.Num() >= BufferSizePredictTimeZero) {
+//	//		// 버퍼가 꽉 찼으면 가장 오래된 데이터를 제거
+//	//		ResponseBuffer.RemoveAt(0);
+//	//	}
+//	//	// 새로 파싱한 데이터를 버퍼에 추가
+//	//	ResponseBuffer.Add(temp);
+//
+//	//	// 최신 응답을 설정
+//	//	port8082ResponseAnswer = temp;
+//	//}
+//}
+
+
+//void AProtocolLibrary::ParshingResponsePort8082(FString& ReceivedMessage) {
+//	TArray<FString> tempArray;
+//	ReceivedMessage.ParseIntoArray(tempArray, TEXT(","), true);
+//
+//	TArray<double> temp;
+//	{
+//		FScopeLock Lock(&CriticalSection);
+//		for (const FString& str : tempArray) {
+//			double value = FCString::Atod(*str);
+//			temp.Add(value);
+//			UE_LOG(LogTemp, Log, TEXT("Recv Density: %lf | density Str: %s"), value, *str);
+//		}
+//	}
+//
+//	if (this->PredictTime == 0 && !temp.IsEmpty() && this->PredictCount >= 1) 
+//	{
+//		TArray<double> SelectedValues;
+//		{
+//			// CriticalSection으로 배열 접근 동기화
+//			FScopeLock Lock(&CriticalSection);  // CriticalSection 진입
+//			for (int32 i = 0; i < this->PredictCount; i++) {
+//				SelectedValues.Add(temp[i]);
+//			}
+//
+//			if (this->PredictCount != 0) {
+//				this->port8082ResponseAnswer = SelectedValues;
+//			}
+//		}  // CriticalSection에서 나옴
+//	}
+//	else if (this->PredictTime >= 10 && !temp.IsEmpty() && this->PredictCount >= 1) 
+//	{
+//		TArray<double> SelectedValues;
+//
+//		// Calculate index and ensure we don't exceed the size of temp
+//		int32 idx = this->PredictCount * 6;
+//		//int32 countToProcess = FMath::Min(idx, temp.Num());
+//
+//		{
+//			// CriticalSection으로 배열 접근 동기화
+//			FScopeLock Lock(&CriticalSection);  // CriticalSection 진입
+//			for (int32 i = 0; i < idx; i++) {
+//				SelectedValues.Add(temp[i]);
+//			}
+//
+//			this->port8082ResponseAnswer = SelectedValues;
+//		}  // CriticalSection에서 나옴
+//	}
+//}
+
+
+
+
+//void AProtocolLibrary::ParshingResponsePort8082(FString& ReceivedMessage) {
+//	TArray<FString> tempArray;
+//	ReceivedMessage.ParseIntoArray(tempArray, TEXT(","), true);
+//
+//	TArray<double> temp;
+//
+//	for (const FString& str : tempArray) {
+//		double value = FCString::Atod(*str);
+//		temp.Add(value);
+//		UE_LOG(LogTemp, Log, TEXT("Recv Density: %lf | density Str: %s"), value, *str);
+//	}
+//
+//	if (this->PredictTime == 0 && !temp.IsEmpty()) {
+//		TArray<double> SelectedValues;
+//
+//		// Ensure we don't exceed the size of temp
+//		int32 countToProcess = FMath::Min(this->PredictCount, temp.Num());
+//
+//		{
+//			// CriticalSection으로 배열 접근 동기화
+//			FScopeLock Lock(&CriticalSection);  // CriticalSection 진입
+//			for (int32 i = 0; i < countToProcess; i++) {
+//				SelectedValues.Add(temp[i]);
+//			}
+//
+//			if (this->PredictCount != 0) {
+//				this->port8082ResponseAnswer = SelectedValues;
+//			}
+//		}  // CriticalSection에서 나옴
+//	}
+//	else if (this->PredictTime >= 10 && !temp.IsEmpty()) {
+//		TArray<double> SelectedValues;
+//
+//		// Calculate index and ensure we don't exceed the size of temp
+//		int32 idx = this->PredictCount * 6;
+//		int32 countToProcess = FMath::Min(idx, temp.Num());
+//
+//		{
+//			// CriticalSection으로 배열 접근 동기화
+//			FScopeLock Lock(&CriticalSection);  // CriticalSection 진입
+//			for (int32 i = 0; i < countToProcess; i++) {
+//				SelectedValues.Add(temp[i]);
+//			}
+//
+//			this->port8082ResponseAnswer = SelectedValues;
+//		}  // CriticalSection에서 나옴
+//	}
+//}
+
+
+void AProtocolLibrary::ParshingResponsePort8083(FString& ReceivedMessage)
+{
+	//UE_LOG(LogTemp, Log, TEXT("DEBUG : ParshingResponsePort8083"));
+
+	//TArray<FString> stringArray;
+	//ReceivedMessage.ParseIntoArray(stringArray, TEXT(","), true);
+
+	//// 잠금을 통해 배열에 안전하게 접근합니다.
+	//{
+	//	FScopeLock Lock(&Mutex);
+	//	for (const FString& str : stringArray)
+	//	{
+	//		double value = FCString::Atod(*str);
+	//		this->port8083ResponseAnswer.Add(value);
+	//	}
+	//}
+
+	//// 초기화 플래그 설정
+	//bool bInitialized = false;
+
+	//{
+	//	FScopeLock Lock(&Mutex); // port8083Answer 초기화 중에 락 사용
+	//	if (this->port8083Answer.IsEmpty() && CompletedIterations == 0 && bInitialized == true)
+	//	{
+	//		// port8083ResponseAnswer에서 처음 10,000개의 값을 port8083Answer로 복사
+	//		for (int32 i = 0; i < 10000; ++i)
+	//		{
+	//			this->port8083Answer.Add(this->port8083ResponseAnswer[i]);
+	//		}
+	//		this->port8083ResponseAnswer.RemoveAt(0, 10000, false);
+	//		bInitialized = true; 
+	//	}
+	//}
+
+	//if (bInitialized)
+	//{
+	//	AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [this]()
+	//	{
+	//		UE_LOG(LogTemp, Log, TEXT("DEBUG : MonitorPort8083Answer Task Triggered"));
+	//	});
+	//}
 }
 
 
@@ -525,7 +848,11 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 			Message += FString::Printf(TEXT("%lf"), PlayerLocation.X) + "," \
 				+ FString::Printf(TEXT("%lf"), PlayerLocation.Y) + "," \
 				+ FString::Printf(TEXT("%lf"), PlayerLocation.Z);
-			//TI
+
+			/*Message += FString::Printf(TEXT("%d"), this->IndexX) + "," \
+				+ FString::Printf(TEXT("%d"), this->IndexY) + "," \
+				+ FString::Printf(TEXT("%d"), this->IndexZ);
+			*///TI
 			Message += "TI";
 			FTimespan NewTime = CurrentTime + FTimespan::FromSeconds(0.1);
 			int32 Hours = NewTime.GetHours();
@@ -544,7 +871,7 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 
 			// 수신된 데이터의 크기에 맞춰 문자열 변환
 			FString ReceivedMessage = ReceiveData(Socket);
-			//UE_LOG(LogTemp, Log, TEXT("Port 8081 Received from server: %s"), *ReceivedMessage);
+			UE_LOG(LogTemp, Log, TEXT("Port 8081 Received from server: %s"), *ReceivedMessage);
 
 			if (ReceivedMessage.Contains(TEXT("None"))) // None일 때
 			{
@@ -562,11 +889,16 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 			//KI
 			Message += "KI";
 			FString ValueToAdd;
+			FString clickbutton;
 			for (size_t i = 0; i < Port8082_request.Num(); i++)
 			{
 				ValueToAdd = Port8082_request[i] ? TEXT("1") : TEXT("0");
+				clickbutton += ValueToAdd;
+				if (ValueToAdd == "1")
+					this->PredictCount++;
 				Message += ValueToAdd;
 			}
+			this->ClickButton = clickbutton;
 			//for (size_t i = 0; i < 7; i++) // 중복 가능
 			//{
 			//	FString ValueToAdd = TEXT("0");
@@ -607,6 +939,9 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 			Message += "TF";
 			Message += FString::Printf(TEXT("%d"), PredictTime);
 
+			/*if (!Message.IsEmpty()) {
+				UE_LOG(LogTemp, Log, TEXT("Port 8082 Received from server: %s"), Message);
+			}*/
 
 			const TCHAR* SerializedChar = *Message;
 			int32 Size = FCString::Strlen(SerializedChar) + 1;
@@ -616,7 +951,16 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 
 			// 수신된 데이터의 크기에 맞춰 문자열 변환
 			FString ReceivedMessage = ReceiveData(Socket);
-			//UE_LOG(LogTemp, Log, TEXT("Port 8082 Received from server: %s"), *ReceivedMessage);
+
+			if (!ReceivedMessage.Contains("No valid data available")) {
+				ParshingResponsePort8082(ReceivedMessage);
+			}
+
+
+			//if (Message.Len() > 0 )
+			UE_LOG(LogTemp, Log, TEXT("Port 8082 Received from server: %s"), *ReceivedMessage);
+		
+
 		}
 		else if (Port == 8083)
 		{
@@ -680,28 +1024,25 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 			//	Message += ValueToAdd;
 			//}
 
-			const TCHAR* SerializedChar = *Message;
-			int32 Size = FCString::Strlen(SerializedChar) + 1;
-			int32 Sent = 0;
-			//UE_LOG(LogTemp, Log, TEXT("Port 8082 Send from server: %s"), *Message);
-			Socket->Send((uint8*)TCHAR_TO_UTF8(SerializedChar), Size, Sent);
+			//const TCHAR* SerializedChar = *Message;
+			//int32 Size = FCString::Strlen(SerializedChar) + 1;
+			//int32 Sent = 0;
+			////UE_LOG(LogTemp, Log, TEXT("Port 8082 Send from server: %s"), *Message);
+			//Socket->Send((uint8*)TCHAR_TO_UTF8(SerializedChar), Size, Sent);
 
-			// 수신된 데이터의 크기에 맞춰 문자열 변환
-			FString ReceivedMessage = ReceiveData(Socket);
-			//UE_LOG(LogTemp, Log, TEXT("Port 8083 Received from server: %s"), *ReceivedMessage);
+			//// 수신된 데이터의 크기에 맞춰 문자열 변환
+			//FString ReceivedMessage = ReceiveData(Socket);
+			////UE_LOG(LogTemp, Log, TEXT("Port 8083 Received from server: %s"), *ReceivedMessage);
 
-
-			if (ReceivedMessage.Contains(TEXT("Invalid request"))) // None일 때
-			{
-				if (!port8083ResponseAnswer.IsEmpty())
-					port8083ResponseAnswer.Empty();
-			}
-			else 
-			{
-				ParshingResponsePort8083(ReceivedMessage);
-			}
-
-
+			//if (ReceivedMessage.Contains(TEXT("Invalid request"))) // None일 때
+			//{
+			//	if (!port8083ResponseAnswer.IsEmpty())
+			//		port8083ResponseAnswer.Empty();
+			//}
+			//else 
+			//{
+			//	ParshingResponsePort8083(ReceivedMessage);
+			//}
 		}
 	}
 	else

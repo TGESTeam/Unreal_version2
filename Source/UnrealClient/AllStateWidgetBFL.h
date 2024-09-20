@@ -11,6 +11,7 @@
 #include "Components/Widget.h"
 #include "ProtocolLibrary.h"
 #include "UnrealClientCharacter.h"
+#include "Voxel_Color.h"
 #include "AllStateWidgetBFL.generated.h"
 
 /**
@@ -56,7 +57,10 @@ class UNREALCLIENT_API UAllStateWidgetBFL : public UBlueprintFunctionLibrary
 	static bool IsSubscribe(AUnrealClientCharacter* PlayerCharacter, KindPV selectedPV); // 해당 함수를 통해서 값을 전달
 
 	UFUNCTION(BlueprintCallable, Category = "GetCurrentLocationOfDensity")
-	static float GetCurrentLocationOfDensity(AUnrealClientCharacter* PlayerCharacter, KindPV selectedPV, float nowTime, bool changeToPercent = false);
+	static double GetCurrentLocationOfDensity(AUnrealClientCharacter* PlayerCharacter, KindPV selectedPV, float nowTime, bool isBox, int32 index, bool changeToPercent = false);
+
+	UFUNCTION(BlueprintCallable, Category = "GetOnlyCurrentDensity")
+	static double GetOnlyCurrentDensity(AUnrealClientCharacter* PlayerCharacter, KindPV selectedPV, float nowTime, bool isBox, int32 index, bool changeToPercent);
 
 	UFUNCTION(BlueprintCallable, Category = "GetCurrentScreenPointCoordinate")
 	static FVector2D GetCurrentScreenPointCoordinate(FName SeriesId, UWidget* KantanWidget);
@@ -68,10 +72,17 @@ class UNREALCLIENT_API UAllStateWidgetBFL : public UBlueprintFunctionLibrary
 	static TArray<float> GetFutureLocationOfDensities(int32 PointNum, KindPV SelectedPV, AUnrealClientCharacter* PlayerCharacter, bool changeToPercent);
 
 	UFUNCTION(BlueprintCallable, Category="GetFutureLocationOfDensity")
-	static float GetFutureLocationOfDensity(int32 FutureTime, AUnrealClientCharacter * PlayerCharacter, KindPV SelectedPV, bool changeToPercent);
+	static double GetFutureLocationOfDensity(int32 FutureTime, AUnrealClientCharacter * PlayerCharacter, KindPV SelectedPV, bool changeToPercent);
+
+	UFUNCTION(BlueprintCallable, Category = "GetOnlyFutureLocationOfDensity")
+	static double GetOnlyFutureLocationOfDensity(int32 FutureTime, AUnrealClientCharacter* PlayerCharacter, KindPV SelectedPV, bool changeToPercent);
+
 
 	UFUNCTION(BlueprintCallable, Category = "RequestFutureGrpahData")
 	static void RequestFutureGrpahData(int32 FutureTime, AUnrealClientCharacter * PlayerCharacter);
+	
+	UFUNCTION(BlueprintCallable, Category ="ResetGraphIndexs")
+	static void ResetGraphIndexs(AUnrealClientCharacter* PlayerCharacter);
 
 	/* --------------- [Port 8083] --------------- */
 	// Image 위젯의 색상을 변경하는 함수
@@ -87,16 +98,20 @@ class UNREALCLIENT_API UAllStateWidgetBFL : public UBlueprintFunctionLibrary
 	static void MonitorPort8083Answer(UObject* WorldContextObject, UImage* Image, const FLinearColor& NewColor, int32 index);
 
 	UFUNCTION(BlueprintCallable, Category = "WidgetOperations") //현재 시간 업데이트
-		static void UpdateTimeTextBlock(AUnrealClientCharacter* PlayerCharacter, UObject* WorldContextObject, UTextBlock* TextBlock);
+	static void UpdateTimeTextBlock(AUnrealClientCharacter* PlayerCharacter, UObject* WorldContextObject, UTextBlock* TextBlock);
+
+	UFUNCTION(BlueprintCallable, Category = "GetCurrentTime")
+	static double GetCurrentTime();
 
 	UFUNCTION(BlueprintCallable, Category = "WidgetOperations") // UmgCurrentTime 초기화
-		static void InitializeTime();
+	static void InitializeTime();
 
 	UFUNCTION(BlueprintCallable, Category = "WidgetOperations") // 10s 더하기
-		static void AddSecondsToCurrentTimePlus(int32 Seconds);
+	static void AddSecondsToCurrentTimePlus(int32 Seconds);
 
 	UFUNCTION(BlueprintCallable, Category = "WidgetOperations") // -10s 더하기
-		static void AddSecondsToCurrentTimemin(int32 Seconds);
+	static void AddSecondsToCurrentTimemin(int32 Seconds);
+
 
 private:
 	static double StartTime;

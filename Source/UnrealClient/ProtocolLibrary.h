@@ -34,6 +34,9 @@ public:
 	};
 
 	//Port8081 Request
+	//int64 IndexX;
+	//int64 IndexY;
+	//int64 IndexZ;
 	TArray<bool> Port8081_request;
 
 	//선택된 값
@@ -74,9 +77,63 @@ public:
 	// ---------------------------------------
 
 	//Port8082 Request
+
+
+	FString ClickButton;
+	//FCriticalSection CriticalSectionCO2_Location;
+	//FCriticalSection CriticalSectionO2_Location;
+	//FCriticalSection CriticalSectionCo_Location;
+	//FCriticalSection CriticalSectionTemp_Location;
+	//FCriticalSection CriticalSectionAccel_Location;
+	
+	int32 PredictCount = 0;
 	int32 PredictTime = 0;
+
+	//TArray<double> O2_Location;
+	//TArray<double> Co2_Location;
+	//TArray<double> CO_Location;
+	//TArray<double> Temp_Location;
+	//TArray<double> Velocity_Location;
+	//TArray<double> Accel_Location;
+	//TArray<double> Fuel_Location;
+
+	//TQueue<double> O2_LocationQueue;
+	//TQueue<double> CO2_LocationQueue;
+	//TQueue<double> CO_LocationQueue;
+	//TQueue<double> TEMP_LocationQueue;
+	//TQueue<double> VELOCITY_LocationQueue;
+	//TQueue<double> ACCEL_LocationQueue;
+	//TQueue<double> FUEL_LocationQueue;
+
+
+		//enum KindPV {
+		//O2 UMETA(DisplayName = "O2"),
+		//CO2 UMETA(DisplayName = "CO2"),
+		//CO UMETA(DisplayName = "CO"),
+		//TEMP UMETA(DisplayName = "TEMP"),
+		//VELOCITY UMETA(DisplayName = "VELOCITY"),
+		//ACCEL UMETA(DisplayName = "ACCEL"),
+		//FUEL UMETA(DisplayName = "FUEL"),
+		//KIND_PV_LENGTH UMETA(Disp
+	// --------
 	TArray<bool> Port8082_request;
+	//TArray<double> port8082ResponseAnswerCurrentDensity; // GetOnlyCurrentDensity GetCurrentLocationOfDensity
+	//TArray<double> port8082ResponseAnswerLocationOfDensity;
+	/* 9월 9일 추가
+		미래의 끝 점, 끝 점을 제외한 미래점들 array
+	*/
+	TArray<double> port8082ResponseAnswerFutureOfDensity;
+	TArray<TArray<double>> port8082ResponseAnswerFutureOfDensities;
+
+	int32 LoopNowGraphCnt;
+	int32 LoopBoxNowGraphCnt;
+	int32 LoopFutureGraphCnt;
+	int32 LoopBoxFutureGraphCnt;
+	int32 LoopArrayFutureGraphCnt;
 	void setPort8082_request(int32 index, KindPV selectedPV);
+	void ParshingResponsePort8082(FString& ReceivedMessage);
+	FCriticalSection CriticalSection;  // 동기화를 위한 CriticalSection 변수 추가
+
 	//int32 PredictTime = 0;
 	//struct Port8082_request { // 다중 선택 가능
 	//	bool CO2 = false;
@@ -101,6 +158,10 @@ public:
 
 	int32 CompletedIterations = 0; // 순회 완료 횟수 카운터
 	static const int32 MaxIterations = 10000; // 최대 순회 값
+
+
+	//TArray<TArray<double>> ResponseBuffer;  // ResponseBuffer 변수 추가
+	//int32 BufferSizePredictTimeZero = 5;  // 버퍼의 크기도 정의
 
 	TArray<bool> Port8083_request;
 	void setPort8083_request(int32 index, FloorPlanPV seletedPV);

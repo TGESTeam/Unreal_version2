@@ -525,6 +525,27 @@ void UAllStateWidgetBFL::UpdateTimeTextBlock(AUnrealClientCharacter* PlayerChara
 	ProtocolLibraryInstance->CurrentTime = AdjustedTimeSpan;
 }
 
+double UAllStateWidgetBFL::GetCurrentTime()
+{
+	double CurrentTimeInSeconds = FPlatformTime::Seconds() - StartTime + changeTime;
+	//UE_LOG(LogTemp, Log, TEXT("changeTime : %lf"), changeTime);
+	if (CurrentTimeInSeconds < 0)
+	{
+		CurrentTimeInSeconds = 0.0;
+		StartTime = FPlatformTime::Seconds();
+		changeTime = 0.0;
+	}
+
+	FTimespan TimeSinceStartSpan = FTimespan::FromSeconds(CurrentTimeInSeconds);
+
+	
+	//return TimeSinceStartSpan.GetTotalSeconds();
+	//return FMath::RoundToDouble(TimeSinceStartSpan.GetTotalSeconds());
+	double TotalSeconds = TimeSinceStartSpan.GetTotalSeconds();
+	double RoundedToHalf = FMath::RoundToDouble(TotalSeconds * 2.0) / 2.0;
+	return RoundedToHalf;
+}
+
 void UAllStateWidgetBFL::InitializeTime()
 {
 
@@ -610,19 +631,175 @@ bool UAllStateWidgetBFL::IsSubscribe(AUnrealClientCharacter* PlayerCharacter, Ki
 	return isSubscribe;
 }
 
-float UAllStateWidgetBFL::GetCurrentLocationOfDensity(AUnrealClientCharacter* PlayerCharacter, KindPV selectedPV, float nowTime, bool changeToPercent) {
+// 재윤
+//double UAllStateWidgetBFL::GetCurrentLocationOfDensity(AUnrealClientCharacter* PlayerCharacter, KindPV selectedPV, float nowTime, bool isBox, int32 index, bool changeToPercent) {
+//	if (PlayerCharacter == nullptr) {
+//		UE_LOG(LogTemp, Error, TEXT("Not found the Player Character!"));
+//		return 0.0f;
+//	}
+//	UE_LOG(LogTemp, Error, TEXT("ResponseBuffer index %d"), (int32)selectedPV);
+//	//FScopeLock Lock(&PlayerCharacter->GetProtocolLibrary()->CriticalSection);
+//	//if (PlayerCharacter->GetProtocolLibrary()->ResponseBuffer.Num() == 0) {
+//	//	UE_LOG(LogTemp, Error, TEXT("ResponseBuffer is empty!"));
+//	//	return 0.0f;
+//	//}		
+//
+//	return 0.0f;
+//
+//	//// 최신 응답 데이터를 버퍼에서 가져옴
+//	//TArray<double> latestResponse = PlayerCharacter->GetProtocolLibrary()->ResponseBuffer.Last();
+//	//UE_LOG(LogTemp, Error, TEXT("ResponseBuffer index %d"), index);
+//	//if (latestResponse.IsValidIndex(index)) {
+//	//	double density = latestResponse[index];
+//
+//	//	// 퍼센트로 변환해야 할 경우
+//	//	if (changeToPercent) {
+//	//		double densityPercent = (density - AVoxel_Color::DENSITY_MIN[selectedPV]) / (AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV]) * 100;
+//	//		return densityPercent;
+//	//	}
+//
+//	//	return density;
+//	//}
+//
+//	//return 0.0;
+//}
+
+
+//double UAllStateWidgetBFL::GetCurrentLocationOfDensity(AUnrealClientCharacter* PlayerCharacter, KindPV selectedPV, float nowTime, bool isBox, int32 index, bool changeToPercent) {
+//		UE_LOG(LogTemp, Log, TEXT("Count : %d "), index);
+//	
+//		if (PlayerCharacter == nullptr) {
+//			UE_LOG(LogTemp, Error, TEXT("Not found the Player Character!"));
+//			return false;
+//		}
+//		//UE_LOG(LogTemp, Error, TEXT("selectedPV : %d"), (int32) selectedPV);
+//		double density = 0.0f;
+//		UE_LOG(LogTemp, Error, TEXT("GetCurrentLocationOfDensity index :  %d"), index);
+//	
+//		// 배열이 비어 있거나 ThisCnt가 유효하지 않으면 바로 반환
+//		if (PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswer.Num() == 0) {
+//			UE_LOG(LogTemp, Error, TEXT("port8082ResponseAnswer is empty!"));
+//			return 0.0f;
+//		}
+//
+//
+//	
+//		//예측 시간이 0일 경우
+//		if (PlayerCharacter->GetProtocolLibrary()->PredictTime == 0) {
+//	
+//			if (!PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswer.IsEmpty()) {
+//				FScopeLock Lock(&PlayerCharacter->GetProtocolLibrary()->CriticalSection);  // CriticalSection으로 배열 접근 동기화
+//				//density = PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswer[ThisCnt];
+//				//UE_LOG(LogTemp, Error, TEXT("GetCurrentLocationOfDensity %lf") , density);
+//			}
+//		}
+//	
+//		
+//		if (changeToPercent) {
+//	
+//			//UE_LOG(LogTemp, Log, TEXT("0 : %lf, 1 : %lf, 2 : %lf, 3 : %lf , 4 : %lf , 5 : %lf , 6 : %lf"),  AVoxel_Color::DENSITY_MIN[0], AVoxel_Color::DENSITY_MIN[1], AVoxel_Color::DENSITY_MIN[2], AVoxel_Color::DENSITY_MIN[3], AVoxel_Color::DENSITY_MIN[4], AVoxel_Color::DENSITY_MIN[5], AVoxel_Color::DENSITY_MIN[6]);
+//	
+//			double densityPercent = (density - AVoxel_Color::DENSITY_MIN[selectedPV]) / (AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV]) * 100;
+//			//UE_LOG(LogTemp, Log, TEXT("[%d]Percent Data: %lf | density: %lf"), (int32)selectedPV, densityPercent, density);
+//			//UE_LOG(LogTemp, Log, TEXT("selected : [%d], density: %lf, DENSITY_MIN[selectedPV] : %lf, DENSITY_MAX[selectedPV : %lf,  Percent Data: %lf "), (int32)selectedPV, density, AVoxel_Color::DENSITY_MIN[selectedPV], AVoxel_Color::DENSITY_MAX[selectedPV] , densityPercent );
+//			//UE_LOG(LogTemp, Log, TEXT("AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV] : [%lf], "), AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV]);
+//			//UE_LOG(LogTemp, Log, TEXT("density - AVoxel_Color::DENSITY_MIN[selectedPV] : [%lf], "), density - AVoxel_Color::DENSITY_MIN[selectedPV]);
+//			if (densityPercent > 1.0f) {
+//				return 1.0f;
+//			}
+//			else if (densityPercent < 0.0f) {
+//				return 0.0f;
+//			}
+//			
+//			return densityPercent;
+//		}
+//	
+//		/* 중요) 나중에 MIn과 MAX에 대하여 Persent를 구해야함 */
+//		//float densityPercent;
+//	
+//		return density;
+//}
+
+
+// ------ 최신 =
+double UAllStateWidgetBFL::GetOnlyCurrentDensity(AUnrealClientCharacter* PlayerCharacter, KindPV selectedPV, float nowTime, bool isBox, int32 index, bool changeToPercent) {
 	if (PlayerCharacter == nullptr) {
 		UE_LOG(LogTemp, Error, TEXT("Not found the Player Character!"));
 		return false;
 	}
+	//UE_LOG(LogTemp, Error, TEXT("selectedPV : %d"), (int32)selectedPV);
+	double density = 0.0f;
 
-	float density = 0.0f;
-	//AProtocolLibrary::PutPortDataToOneVar<AUnrealClientCharacter::LocationStatus, float>(PlayerCharacter->CurrentLocationStatus, density, selectedPV);
+	if (selectedPV == CO2) {
+		{
+			//FScopeLock Lock(&PlayerCharacter->GetProtocolLibrary()->CriticalSectionCO2_Current); // O2_Current 배열에 대한 뮤텍스
+			//if (PlayerCharacter->GetProtocolLibrary()->Co2_Current.Num() > 0) {
+			//	density = PlayerCharacter->GetProtocolLibrary()->Co2_Current[0];
+			//	PlayerCharacter->GetProtocolLibrary()->Co2_Current.RemoveAt(0);
+			//}
+			//else {
+			//	//UE_LOG(LogTemp, Error, TEXT("O2_Current array is empty"));
+			//}
+		}
+	}
+	else if (selectedPV == O2) {
+		{
+			//FScopeLock Lock(&PlayerCharacter->GetProtocolLibrary()->CriticalSectionO2_Current); // O2_Current 배열에 대한 뮤텍스
+			//if (PlayerCharacter->GetProtocolLibrary()->O2_Current.Num() > 0) {
+			//	density = PlayerCharacter->GetProtocolLibrary()->O2_Current[0];
+			//	PlayerCharacter->GetProtocolLibrary()->O2_Current.RemoveAt(0);
+			//}
+			//else {
+			//	//UE_LOG(LogTemp, Error, TEXT("O2_Current array is empty"));
+			//}
+		}
+	}
+	//else if (selectedPV == CO) {
+	//	{
+	//		FScopeLock Lock(&PlayerCharacter->GetProtocolLibrary()->CriticalSectionCo_Current); // O2_Current 배열에 대한 뮤텍스
+	//		if (PlayerCharacter->GetProtocolLibrary()->CO_Current.Num() > 0) {
+	//			density = PlayerCharacter->GetProtocolLibrary()->CO_Current[0];
+	//			PlayerCharacter->GetProtocolLibrary()->CO_Current.RemoveAt(0);
+	//		}
+	//		else {
+	//			//UE_LOG(LogTemp, Error, TEXT("O2_Current array is empty"));
+	//		}
+	//	}
+	//}
+	//else if (selectedPV == CO2) {
+	//	{
+	//		FScopeLock Lock(&PlayerCharacter->GetProtocolLibrary()->CriticalSection);
+	//		if (PlayerCharacter->GetProtocolLibrary()->Co2_Current.Num() > 0) {
+	//			density = PlayerCharacter->GetProtocolLibrary()->Co2_Current[0];
+	//			PlayerCharacter->GetProtocolLibrary()->Co2_Current.RemoveAt(0);
+	//		}
+	//		else {
+	//			//UE_LOG(LogTemp, Error, TEXT("Co2_Current array is empty"));
+	//		}
+	//	}
+	//}
 
-	density = PlayerCharacter->CurrentLocationStatus[selectedPV];
-	
+
+	//UE_LOG(LogTemp, Error, TEXT("GetOnlyCurrentDensity %lf"), density);
+
 	if (changeToPercent) {
 
+		//UE_LOG(LogTemp, Log, TEXT("0 : %lf, 1 : %lf, 2 : %lf, 3 : %lf , 4 : %lf , 5 : %lf , 6 : %lf"),  AVoxel_Color::DENSITY_MIN[0], AVoxel_Color::DENSITY_MIN[1], AVoxel_Color::DENSITY_MIN[2], AVoxel_Color::DENSITY_MIN[3], AVoxel_Color::DENSITY_MIN[4], AVoxel_Color::DENSITY_MIN[5], AVoxel_Color::DENSITY_MIN[6]);
+
+		double densityPercent = (density - AVoxel_Color::DENSITY_MIN[selectedPV]) / (AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV]) * 100;
+		//UE_LOG(LogTemp, Log, TEXT("[%d]Percent Data: %lf | density: %lf"), (int32)selectedPV, densityPercent, density);
+		//UE_LOG(LogTemp, Log, TEXT("selected : [%d], density: %lf, DENSITY_MIN[selectedPV] : %lf, DENSITY_MAX[selectedPV : %lf,  Percent Data: %lf "), (int32)selectedPV, density, AVoxel_Color::DENSITY_MIN[selectedPV], AVoxel_Color::DENSITY_MAX[selectedPV] , densityPercent );
+		//UE_LOG(LogTemp, Log, TEXT("AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV] : [%lf], "), AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV]);
+		//UE_LOG(LogTemp, Log, TEXT("density - AVoxel_Color::DENSITY_MIN[selectedPV] : [%lf], "), density - AVoxel_Color::DENSITY_MIN[selectedPV]);
+		//UE_LOG(LogTemp, Log, TEXT("density : [%lf]"), densityPercent);
+		if (densityPercent > 1.0f) {
+			return 1.0f;
+		}
+		else if (densityPercent < 0.0f) {
+			return 0.0f;
+		}
+
+		return densityPercent;
 	}
 
 	/* 중요) 나중에 MIn과 MAX에 대하여 Persent를 구해야함 */
@@ -630,6 +807,292 @@ float UAllStateWidgetBFL::GetCurrentLocationOfDensity(AUnrealClientCharacter* Pl
 
 	return density;
 }
+
+
+/*
+	점을 찍을 때 쓰는 함수
+*/
+
+double UAllStateWidgetBFL::GetCurrentLocationOfDensity(AUnrealClientCharacter* PlayerCharacter, KindPV selectedPV, float nowTime, bool isBox, int32 index, bool changeToPercent) {
+	if (PlayerCharacter == nullptr) {
+		UE_LOG(LogTemp, Error, TEXT("Not found the Player Character!"));
+		return false;
+	}
+	UE_LOG(LogTemp, Error, TEXT("selectedPV : %d"), (int32)selectedPV);
+	double density = 0.0f;
+	//double tempDensity = 0.0f;  // 임시 변수
+
+	//// 락 프리 큐로 자원 접근
+	//if (selectedPV == CO2) {
+	//	if (PlayerCharacter->GetProtocolLibrary()->CO2_LocationQueue.Dequeue(tempDensity)) {
+	//		density = tempDensity;
+	//	}
+	//}
+	//else if (selectedPV == O2) {
+	//	if (PlayerCharacter->GetProtocolLibrary()->O2_LocationQueue.Dequeue(tempDensity)) {
+	//		density = tempDensity;
+	//	}
+	//}
+	//else if (selectedPV == CO) {
+	//	if (PlayerCharacter->GetProtocolLibrary()->CO_LocationQueue.Dequeue(tempDensity)) {
+	//		density = tempDensity;
+	//	}
+	//}
+	//else if (selectedPV == TEMP) {
+	//	if (PlayerCharacter->GetProtocolLibrary()->TEMP_LocationQueue.Dequeue(tempDensity)) {
+	//		density = tempDensity;
+	//	}
+	//}
+	//else if (selectedPV == VELOCITY) {
+	//	if (PlayerCharacter->GetProtocolLibrary()->VELOCITY_LocationQueue.Dequeue(tempDensity)) {
+	//		density = tempDensity;
+	//	}
+	//}
+	//else if (selectedPV == ACCEL) {
+	//	if (PlayerCharacter->GetProtocolLibrary()->ACCEL_LocationQueue.Dequeue(tempDensity)) {
+	//		density = tempDensity;
+	//	}
+	//}
+	//else if (selectedPV == FUEL) {
+	//	if (PlayerCharacter->GetProtocolLibrary()->FUEL_LocationQueue.Dequeue(tempDensity)) {
+	//		density = tempDensity;
+	//	}
+	//}
+
+
+	//if (changeToPercent) {
+	//	double densityPercent = (density - AVoxel_Color::DENSITY_MIN[selectedPV]) / (AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV]) * 100;
+	//	UE_LOG(LogTemp, Log, TEXT("selectedPV : %d, density : [%lf]"), (int32) selectedPV, densityPercent);
+	//	if (densityPercent > 1.0f) {
+	//		return 1.0f;
+	//	}
+	//	else if (densityPercent < 0.0f) {
+	//		return 0.0f;
+	//	}
+
+	//	return densityPercent;
+	//}
+
+	return density;
+}
+
+//double UAllStateWidgetBFL::GetCurrentLocationOfDensity(AUnrealClientCharacter* PlayerCharacter, KindPV selectedPV, float nowTime, bool isBox, int32 index, bool changeToPercent) {
+//	if (PlayerCharacter == nullptr) {
+//		UE_LOG(LogTemp, Error, TEXT("Not found the Player Character!"));
+//		return false;
+//	}
+//	UE_LOG(LogTemp, Error, TEXT("selectedPV : %d"), (int32)selectedPV);
+//	double density = 0.0f;
+//
+//
+//	if (selectedPV == CO2) {
+//		{
+//			FScopeLock Lock(&PlayerCharacter->GetProtocolLibrary()->CriticalSectionCO2_Location);
+//			if (PlayerCharacter->GetProtocolLibrary()->Co2_Location.Num() > 0) {
+//				density = PlayerCharacter->GetProtocolLibrary()->Co2_Location[0];
+//				PlayerCharacter->GetProtocolLibrary()->Co2_Location.RemoveAt(0);
+//			}
+//
+//		}
+//	}
+//	else if (selectedPV == O2) {
+//		{
+//			FScopeLock Lock(&PlayerCharacter->GetProtocolLibrary()->CriticalSectionO2_Location);
+//			if (PlayerCharacter->GetProtocolLibrary()->O2_Location.Num() > 0) {
+//				density = PlayerCharacter->GetProtocolLibrary()->O2_Location[0];
+//				PlayerCharacter->GetProtocolLibrary()->O2_Location.RemoveAt(0);
+//			}
+//		}
+//	}
+//
+//	if (changeToPercent) {
+//
+//		//UE_LOG(LogTemp, Log, TEXT("0 : %lf, 1 : %lf, 2 : %lf, 3 : %lf , 4 : %lf , 5 : %lf , 6 : %lf"),  AVoxel_Color::DENSITY_MIN[0], AVoxel_Color::DENSITY_MIN[1], AVoxel_Color::DENSITY_MIN[2], AVoxel_Color::DENSITY_MIN[3], AVoxel_Color::DENSITY_MIN[4], AVoxel_Color::DENSITY_MIN[5], AVoxel_Color::DENSITY_MIN[6]);
+//
+//		double densityPercent = (density - AVoxel_Color::DENSITY_MIN[selectedPV]) / (AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV]) * 100;
+//		//UE_LOG(LogTemp, Log, TEXT("[%d]Percent Data: %lf | density: %lf"), (int32)selectedPV, densityPercent, density);
+//		//UE_LOG(LogTemp, Log, TEXT("selected : [%d], density: %lf, DENSITY_MIN[selectedPV] : %lf, DENSITY_MAX[selectedPV : %lf,  Percent Data: %lf "), (int32)selectedPV, density, AVoxel_Color::DENSITY_MIN[selectedPV], AVoxel_Color::DENSITY_MAX[selectedPV] , densityPercent );
+//		//UE_LOG(LogTemp, Log, TEXT("AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV] : [%lf], "), AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV]);
+//		//UE_LOG(LogTemp, Log, TEXT("density - AVoxel_Color::DENSITY_MIN[selectedPV] : [%lf], "), density - AVoxel_Color::DENSITY_MIN[selectedPV]);
+//		UE_LOG(LogTemp, Log, TEXT("density : [%lf]"), densityPercent);
+//		if (densityPercent > 1.0f) {
+//			return 1.0f;
+//		}
+//		else if (densityPercent < 0.0f) {
+//			return 0.0f;
+//		}
+//
+//		return densityPercent;
+//	}
+//
+//	/* 중요) 나중에 MIn과 MAX에 대하여 Persent를 구해야함 */
+//	//float densityPercent;
+//
+//	return density;
+//}
+
+// -- 준상 ---
+
+/* 
+	Box를 그릴때 사용하는 함수
+*/
+//double UAllStateWidgetBFL::GetOnlyCurrentDensity(AUnrealClientCharacter* PlayerCharacter, KindPV selectedPV, float nowTime, bool isBox, int32 index, bool changeToPercent) {
+//	if (PlayerCharacter == nullptr) {
+//		UE_LOG(LogTemp, Error, TEXT("Not found the Player Character!"));
+//		return false;
+//	}
+//	UE_LOG(LogTemp, Error, TEXT("selectedPV : %d"), (int32)selectedPV);
+//	double density = 0.0f;
+//	int32& ThisCnt = PlayerCharacter->GetProtocolLibrary()->LoopNowGraphCnt;
+//
+//	if (isBox) {
+//		ThisCnt = PlayerCharacter->GetProtocolLibrary()->LoopBoxNowGraphCnt;
+//	}
+//
+//
+//	// 배열이 비어 있거나 ThisCnt가 유효하지 않으면 바로 반환
+//	if (PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswer.Num() == 0) {
+//		UE_LOG(LogTemp, Error, TEXT("port8082ResponseAnswer is empty!"));
+//		return 0.0f;
+//	}
+//	if (PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswer.Num() < ThisCnt || ThisCnt < 0) {
+//		UE_LOG(LogTemp, Error, TEXT("Is not corrected CurrentNowIndex!"));
+//		return 0.0f;
+//	}
+//
+//
+//	if (PlayerCharacter->GetProtocolLibrary()->PredictTime == 0) {
+//
+//		/*	if (PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswer.Num() < ThisCnt || ThisCnt < 0) {
+//				UE_LOG(LogTemp, Error, TEXT("Is not corrected CurrentNowIndex!"));
+//				return 0.0f;
+//			}*/
+//
+//		if (!PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswer.IsEmpty()) {
+//			FScopeLock Lock(&PlayerCharacter->GetProtocolLibrary()->CriticalSection);  // CriticalSection으로 배열 접근 동기화
+//			density = PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswer[ThisCnt];
+//			//UE_LOG(LogTemp, Error, TEXT("GetCurrentLocationOfDensity %lf") , density);
+//		}
+//	}
+//
+//	UE_LOG(LogTemp, Log, TEXT("Counted Count: ----> %d | port8082ResponseAnswer.Num(): %d "), ThisCnt, PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswer.Num());
+//	if (ThisCnt >= PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswer.Num() - 1) {
+//		ThisCnt = 0;
+//	}
+//	else {
+//		ThisCnt++;
+//	}
+//
+//	/*AProtocolLibrary::PutPortDataToOneVar<AUnrealClientCharacter::LocationStatus, float>(PlayerCharacter->CurrentLocationStatus, density, selectedPV);
+//
+//	density = PlayerCharacter->CurrentLocationStatus[selectedPV];*/
+//
+//	if (changeToPercent) {
+//
+//		//UE_LOG(LogTemp, Log, TEXT("0 : %lf, 1 : %lf, 2 : %lf, 3 : %lf , 4 : %lf , 5 : %lf , 6 : %lf"),  AVoxel_Color::DENSITY_MIN[0], AVoxel_Color::DENSITY_MIN[1], AVoxel_Color::DENSITY_MIN[2], AVoxel_Color::DENSITY_MIN[3], AVoxel_Color::DENSITY_MIN[4], AVoxel_Color::DENSITY_MIN[5], AVoxel_Color::DENSITY_MIN[6]);
+//
+//		double densityPercent = (density - AVoxel_Color::DENSITY_MIN[selectedPV]) / (AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV]) * 100;
+//		//UE_LOG(LogTemp, Log, TEXT("[%d]Percent Data: %lf | density: %lf"), (int32)selectedPV, densityPercent, density);
+//		//UE_LOG(LogTemp, Log, TEXT("selected : [%d], density: %lf, DENSITY_MIN[selectedPV] : %lf, DENSITY_MAX[selectedPV : %lf,  Percent Data: %lf "), (int32)selectedPV, density, AVoxel_Color::DENSITY_MIN[selectedPV], AVoxel_Color::DENSITY_MAX[selectedPV] , densityPercent );
+//		//UE_LOG(LogTemp, Log, TEXT("AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV] : [%lf], "), AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV]);
+//		//UE_LOG(LogTemp, Log, TEXT("density - AVoxel_Color::DENSITY_MIN[selectedPV] : [%lf], "), density - AVoxel_Color::DENSITY_MIN[selectedPV]);
+//		UE_LOG(LogTemp, Log, TEXT("density : [%lf]"), densityPercent);
+//		if (densityPercent > 1.0f) {
+//			return 1.0f;
+//		}
+//		else if (densityPercent < 0.0f) {
+//			return 0.0f;
+//		}
+//
+//		return densityPercent;
+//	}
+//
+//	/* 중요) 나중에 MIn과 MAX에 대하여 Persent를 구해야함 */
+//	//float densityPercent;
+//
+//	return density;
+//}
+//
+//
+///*
+//	점을 찍을 때 쓰는 함수
+//*/
+//double UAllStateWidgetBFL::GetCurrentLocationOfDensity(AUnrealClientCharacter* PlayerCharacter, KindPV selectedPV, float nowTime, bool isBox, int32 index, bool changeToPercent) {
+//	if (PlayerCharacter == nullptr) {
+//		UE_LOG(LogTemp, Error, TEXT("Not found the Player Character!"));
+//		return false;
+//	}
+//	UE_LOG(LogTemp, Error, TEXT("selectedPV : %d"), (int32) selectedPV);
+//	double density = 0.0f;
+//	int32& ThisCnt = PlayerCharacter->GetProtocolLibrary()->LoopNowGraphCnt;
+//
+//	if (isBox) {
+//		ThisCnt = PlayerCharacter->GetProtocolLibrary()->LoopBoxNowGraphCnt;
+//	}
+//
+//
+//	// 배열이 비어 있거나 ThisCnt가 유효하지 않으면 바로 반환
+//	if (PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswer.Num() == 0) {
+//		UE_LOG(LogTemp, Error, TEXT("port8082ResponseAnswer is empty!"));
+//		return 0.0f;
+//	}
+//	if (PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswer.Num() < ThisCnt || ThisCnt < 0) {
+//		UE_LOG(LogTemp, Error, TEXT("Is not corrected CurrentNowIndex!"));
+//		return 0.0f;
+//	}
+//
+//
+//	if (PlayerCharacter->GetProtocolLibrary()->PredictTime == 0) {
+//
+//	/*	if (PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswer.Num() < ThisCnt || ThisCnt < 0) {
+//			UE_LOG(LogTemp, Error, TEXT("Is not corrected CurrentNowIndex!"));
+//			return 0.0f;
+//		}*/
+//
+//		if (!PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswer.IsEmpty()) {
+//			FScopeLock Lock(&PlayerCharacter->GetProtocolLibrary()->CriticalSection);  // CriticalSection으로 배열 접근 동기화
+//			density = PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswer[ThisCnt];
+//			//UE_LOG(LogTemp, Error, TEXT("GetCurrentLocationOfDensity %lf") , density);
+//		}
+//	}
+//
+//	UE_LOG(LogTemp, Log, TEXT("Counted Count: ----> %d | port8082ResponseAnswer.Num(): %d "), ThisCnt, PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswer.Num());
+//	if (ThisCnt >= PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswer.Num()-1) {
+//		ThisCnt = 0;
+//	}
+//	else {
+//		ThisCnt++;
+//	}
+//
+//	/*AProtocolLibrary::PutPortDataToOneVar<AUnrealClientCharacter::LocationStatus, float>(PlayerCharacter->CurrentLocationStatus, density, selectedPV);
+//
+//	density = PlayerCharacter->CurrentLocationStatus[selectedPV];*/
+//	
+//	if (changeToPercent) {
+//
+//		//UE_LOG(LogTemp, Log, TEXT("0 : %lf, 1 : %lf, 2 : %lf, 3 : %lf , 4 : %lf , 5 : %lf , 6 : %lf"),  AVoxel_Color::DENSITY_MIN[0], AVoxel_Color::DENSITY_MIN[1], AVoxel_Color::DENSITY_MIN[2], AVoxel_Color::DENSITY_MIN[3], AVoxel_Color::DENSITY_MIN[4], AVoxel_Color::DENSITY_MIN[5], AVoxel_Color::DENSITY_MIN[6]);
+//
+//		double densityPercent = (density - AVoxel_Color::DENSITY_MIN[selectedPV]) / (AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV]) * 100;
+//		//UE_LOG(LogTemp, Log, TEXT("[%d]Percent Data: %lf | density: %lf"), (int32)selectedPV, densityPercent, density);
+//		//UE_LOG(LogTemp, Log, TEXT("selected : [%d], density: %lf, DENSITY_MIN[selectedPV] : %lf, DENSITY_MAX[selectedPV : %lf,  Percent Data: %lf "), (int32)selectedPV, density, AVoxel_Color::DENSITY_MIN[selectedPV], AVoxel_Color::DENSITY_MAX[selectedPV] , densityPercent );
+//		//UE_LOG(LogTemp, Log, TEXT("AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV] : [%lf], "), AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV]);
+//		//UE_LOG(LogTemp, Log, TEXT("density - AVoxel_Color::DENSITY_MIN[selectedPV] : [%lf], "), density - AVoxel_Color::DENSITY_MIN[selectedPV]);
+//		UE_LOG(LogTemp, Log, TEXT("density : [%lf]"), densityPercent);
+//		if (densityPercent > 1.0f) {
+//			return 1.0f;
+//		}
+//		else if (densityPercent < 0.0f) {
+//			return 0.0f;
+//		}
+//		
+//		return densityPercent;
+//	}
+//
+//	/* 중요) 나중에 MIn과 MAX에 대하여 Persent를 구해야함 */
+//	//float densityPercent;
+//
+//	return density;
+//}
 
 FVector2D UAllStateWidgetBFL::GetCurrentScreenPointCoordinate(FName SeriesId, UWidget* KantanWidget) {
 	TArray<FVector2D> DrawPoints;
@@ -671,43 +1134,214 @@ FVector2D UAllStateWidgetBFL::GetThisScreenPointCoordinate(UWidget* KantanWidget
 		errorRateOfX = graphGridLineLengthX *((ScreenSize.X / ScreenSize.Y) * UNIT_ERROR_RATE_OF_X);
 	}
 
+	//UE_LOG(LogTemp, Log, TEXT("Position: (%lf, %lf) "), WidgetGeometry.Position.X, WidgetGeometry.Position.Y)
+	//UE_LOG(LogTemp, Log, TEXT("GetLocalSize: (%lf, %lf) "), WidgetGeometry.GetLocalSize().X, WidgetGeometry.GetLocalSize().Y)
 	return FVector2D((graphOriginX + (graphGridLineLengthX * ThisCoordinate.X) + errorRateOfX ), (graphOriginY + (graphGridLineLengthY * ThisCoordinate.Y)));
 }
 
-// PointNum: 현재 시간의 점부터 미래시간의 점까지의 갯수(화면에 보이는 점 +1 라고 보면 됨)
-TArray<float> UAllStateWidgetBFL::GetFutureLocationOfDensities(int32 PointNum, KindPV SelectedPV, AUnrealClientCharacter* PlayerCharacter, bool changeToPercent){
-	
-	// startTime ~ endTime을 통해서
-	// startTime + rangeIntergal 초의 값을 매순간 가져올듯
-	//float rangeInterval = (endTime - startTime) / PointNum;
-	
-	// 나중에 바꿔줘야함
-	TArray<float> Data;
-	Data.SetNum(PointNum);
+/* 
+['박스'하나 그릴때 쓰는 Future Density]
+*/
+double UAllStateWidgetBFL::GetOnlyFutureLocationOfDensity(int32 FutureTime, AUnrealClientCharacter* PlayerCharacter, KindPV SelectedPV, bool changeToPercent) {
+	int32& ThisCnt = PlayerCharacter->GetProtocolLibrary()->LoopBoxNowGraphCnt;
+	double density = 0.0f;
 
-	
 
-	// startTime ~ endTime으로
-
-	// 나중에 Percent로 변환해야함
-	if (changeToPercent) {
-		for (int32 i = 0; i < PointNum; ++i) {
-			Data[i] = FMath::RandRange(0.5f, 1.0f); // 배열의 각 요소에 값 할당
-		}
+	// <--------------------- 예외검사 Start --------------------->
+	if (PlayerCharacter == nullptr) {
+		UE_LOG(LogTemp, Error, TEXT("Not found the Player Character!"));
+		return 0.0f;
 	}
 
-	// 디버그 로그 추가
-	//UE_LOG(LogTemp, Warning, TEXT("GetFutureLocationOfDensity: Array Length = %d"), Data.Num());
+	// 배열이 비어 있거나 ThisCnt가 유효하지 않으면 바로 반환
+	if (PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswerFutureOfDensity.Num() == 0) {
+		UE_LOG(LogTemp, Error, TEXT("port8082ResponseAnswer is empty!"));
+		return 0.0f;
+	}
+	if (PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswerFutureOfDensity.Num() < ThisCnt || ThisCnt < 0) {
+		UE_LOG(LogTemp, Error, TEXT("Is not corrected CurrentNowIndex!"));
+		return 0.0f;
+	}
+	// <--------------------- 예외검사 End --------------------->
+
+	if (!PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswerFutureOfDensity.IsEmpty()) {
+
+		density = PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswerFutureOfDensity[ThisCnt];
+		UE_LOG(LogTemp, Error, TEXT("GetCurrentLocationOfDensity %lf"), density);
+	}
 	
-	return Data;
+
+	if (ThisCnt >= PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswerFutureOfDensity.Num() - 1) {
+		ThisCnt = 0;
+	}
+	else {
+		ThisCnt++;
+	}
+
+	if (changeToPercent) {
+
+		//UE_LOG(LogTemp, Log, TEXT("0 : %lf, 1 : %lf, 2 : %lf, 3 : %lf , 4 : %lf , 5 : %lf , 6 : %lf"),  AVoxel_Color::DENSITY_MIN[0], AVoxel_Color::DENSITY_MIN[1], AVoxel_Color::DENSITY_MIN[2], AVoxel_Color::DENSITY_MIN[3], AVoxel_Color::DENSITY_MIN[4], AVoxel_Color::DENSITY_MIN[5], AVoxel_Color::DENSITY_MIN[6]);
+
+		double densityPercent = (density - AVoxel_Color::DENSITY_MIN[SelectedPV]) / (AVoxel_Color::DENSITY_MAX[SelectedPV] - AVoxel_Color::DENSITY_MIN[SelectedPV]) * 100;
+		//UE_LOG(LogTemp, Log, TEXT("[%d]Percent Data: %lf | density: %lf"), (int32)selectedPV, densityPercent, density);
+		//UE_LOG(LogTemp, Log, TEXT("selected : [%d], density: %lf, DENSITY_MIN[selectedPV] : %lf, DENSITY_MAX[selectedPV : %lf,  Percent Data: %lf "), (int32)selectedPV, density, AVoxel_Color::DENSITY_MIN[selectedPV], AVoxel_Color::DENSITY_MAX[selectedPV] , densityPercent );
+		//UE_LOG(LogTemp, Log, TEXT("AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV] : [%lf], "), AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV]);
+		//UE_LOG(LogTemp, Log, TEXT("density - AVoxel_Color::DENSITY_MIN[selectedPV] : [%lf], "), density - AVoxel_Color::DENSITY_MIN[selectedPV]);
+		UE_LOG(LogTemp, Log, TEXT("density : [%lf]"), densityPercent);
+		if (densityPercent > 1.0f) {
+			return 1.0f;
+		}
+		else if (densityPercent < 0.0f) {
+			return 0.0f;
+		}
+
+		return densityPercent;
+	}
+
+	return density;
+	//return FMath::RandRange(0.5f, 1.0f);
 }
 
-
-float UAllStateWidgetBFL::GetFutureLocationOfDensity(int32 FutureTime, AUnrealClientCharacter * PlayerCharacter, KindPV SelectedPV, bool changeToPercent) {
+/* 
+['점' 하나 그릴때 쓰는 Future Density] 
+*/
+double UAllStateWidgetBFL::GetFutureLocationOfDensity(int32 FutureTime, AUnrealClientCharacter * PlayerCharacter, KindPV SelectedPV, bool changeToPercent) {
 	// 받는 것 연결해야함
-	// futureTime은 궂이 안필요할수도 있음	
+	// futureTime은 궂이 안필요할수도 있음
+
+	int32& ThisCnt = PlayerCharacter->GetProtocolLibrary()->LoopFutureGraphCnt;
+	double density = 0.0f;
+
+	 // <--------------------- 예외검사 Start --------------------->
+	if (PlayerCharacter == nullptr) {
+		UE_LOG(LogTemp, Error, TEXT("Not found the Player Character!"));
+		return false;
+	}
+
+	// 배열이 비어 있거나 ThisCnt가 유효하지 않으면 바로 반환
+	if (PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswerFutureOfDensity.Num() == 0) {
+		UE_LOG(LogTemp, Error, TEXT("port8082ResponseAnswer is empty!"));
+		return 0.0f;
+	}
+	if (PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswerFutureOfDensity.Num() < ThisCnt || ThisCnt < 0) {
+		UE_LOG(LogTemp, Error, TEXT("Is not corrected CurrentNowIndex!"));
+		return 0.0f;
+	}
+	// <--------------------- 예외검사 End --------------------->
+
+	if (!PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswerFutureOfDensity.IsEmpty()) {
+
+		density = PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswerFutureOfDensity[ThisCnt];
+		UE_LOG(LogTemp, Error, TEXT("GetCurrentLocationOfDensity %lf"), density);
+	}
 	
-	return FMath::RandRange(0.5f, 1.0f);
+
+	if (ThisCnt >= PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswerFutureOfDensity.Num() - 1) {
+		ThisCnt = 0;
+	}
+	else {
+		ThisCnt++;
+	}
+
+	if (changeToPercent) {
+
+		//UE_LOG(LogTemp, Log, TEXT("0 : %lf, 1 : %lf, 2 : %lf, 3 : %lf , 4 : %lf , 5 : %lf , 6 : %lf"),  AVoxel_Color::DENSITY_MIN[0], AVoxel_Color::DENSITY_MIN[1], AVoxel_Color::DENSITY_MIN[2], AVoxel_Color::DENSITY_MIN[3], AVoxel_Color::DENSITY_MIN[4], AVoxel_Color::DENSITY_MIN[5], AVoxel_Color::DENSITY_MIN[6]);
+
+		double densityPercent = (density - AVoxel_Color::DENSITY_MIN[SelectedPV]) / (AVoxel_Color::DENSITY_MAX[SelectedPV] - AVoxel_Color::DENSITY_MIN[SelectedPV]) * 100;
+		//UE_LOG(LogTemp, Log, TEXT("[%d]Percent Data: %lf | density: %lf"), (int32)selectedPV, densityPercent, density);
+		//UE_LOG(LogTemp, Log, TEXT("selected : [%d], density: %lf, DENSITY_MIN[selectedPV] : %lf, DENSITY_MAX[selectedPV : %lf,  Percent Data: %lf "), (int32)selectedPV, density, AVoxel_Color::DENSITY_MIN[selectedPV], AVoxel_Color::DENSITY_MAX[selectedPV] , densityPercent );
+		//UE_LOG(LogTemp, Log, TEXT("AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV] : [%lf], "), AVoxel_Color::DENSITY_MAX[selectedPV] - AVoxel_Color::DENSITY_MIN[selectedPV]);
+		//UE_LOG(LogTemp, Log, TEXT("density - AVoxel_Color::DENSITY_MIN[selectedPV] : [%lf], "), density - AVoxel_Color::DENSITY_MIN[selectedPV]);
+		UE_LOG(LogTemp, Log, TEXT("density : [%lf]"), densityPercent);
+		if (densityPercent > 1.0f) {
+			return 1.0f;
+		}
+		else if (densityPercent < 0.0f) {
+			return 0.0f;
+		}
+		
+		return densityPercent;
+	}
+	
+	return density;
+}
+
+// PointNum: 현재 시간의 점부터 미래시간의 점까지의 갯수(화면에 보이는 점 +1 라고 보면 됨)
+/* 
+[점 여러개 찍는 Future Density 함수
+]*/
+TArray<float> UAllStateWidgetBFL::GetFutureLocationOfDensities(int32 PointNum, KindPV SelectedPV, AUnrealClientCharacter* PlayerCharacter, bool changeToPercent) {
+	TArray<float> FutureDensities;
+	FutureDensities.SetNum(PointNum);
+	FutureDensities.Init(PointNum, 0.0f);
+
+	int32& ThisCnt = PlayerCharacter->GetProtocolLibrary()->LoopFutureGraphCnt;
+
+	// <--------------------- 예외검사 Start --------------------->
+	if (PlayerCharacter == nullptr) {
+		UE_LOG(LogTemp, Error, TEXT("Not found the Player Character!"));
+		return FutureDensities;
+	}
+
+	// 배열이 비어 있거나 ThisCnt가 유효하지 않으면 바로 반환
+	if (PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswerFutureOfDensities.Num() == 0) {
+		UE_LOG(LogTemp, Error, TEXT("port8082ResponseAnswer is empty!"));
+		return FutureDensities;
+	}
+	if (PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswerFutureOfDensities.Num() < ThisCnt || ThisCnt < 0) {
+		UE_LOG(LogTemp, Error, TEXT("Is not corrected CurrentNowIndex!"));
+		return FutureDensities;
+	}
+
+	if (PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswerFutureOfDensities[ThisCnt].Num() > 6) {
+		UE_LOG(LogTemp, Error, TEXT("Received invalid index of port8082ResponseAnswerFutureOfDensities"));
+		return FutureDensities;
+	}
+
+	// <--------------------- 예외검사 End --------------------->
+
+	if (!PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswerFutureOfDensities.IsEmpty()) {
+		// 여러개의 미래 점은 1개 ~ 6개(max)가 될 수 있다.
+		TArray<double>& ArrayData = PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswerFutureOfDensities[ThisCnt];
+
+		if (changeToPercent) {
+			double densityPercent =0.0f;
+			int ArrayIndex;
+			for (int i = (6 - PointNum); i < ArrayData.Num(); i++) {
+				ArrayIndex = (6 - PointNum) + i;  // 시작 인덱스 조정
+				if (ArrayIndex >= ArrayData.Num()) {
+					break;  // 안전을 위해 배열 범위를 넘지 않도록 체크
+				}
+
+				densityPercent = (ArrayData[ArrayIndex] - AVoxel_Color::DENSITY_MIN[SelectedPV]) /
+					(AVoxel_Color::DENSITY_MAX[SelectedPV] - AVoxel_Color::DENSITY_MIN[SelectedPV]) * 100;
+
+				if (densityPercent > 1.0f || densityPercent < 0.0f) {
+					return FutureDensities;
+				}
+				FutureDensities[i] = densityPercent;
+			}
+		}
+		else {
+			int ArrayIndex;
+			for (int i = (6 - PointNum); i < ArrayData.Num(); i++) {
+				ArrayIndex = (6 - PointNum) + i;  // 시작 인덱스 조정
+				if (ArrayIndex >= ArrayData.Num()) {
+					break;  // 안전을 위해 배열 범위를 넘지 않도록 체크
+				}
+				FutureDensities[i] = ArrayData[ArrayIndex];
+			}
+		}
+	}
+	
+
+	if (ThisCnt >= PlayerCharacter->GetProtocolLibrary()->port8082ResponseAnswerFutureOfDensities.Num() - 1) {
+		ThisCnt = 0;
+	}
+	else {
+		ThisCnt++;
+	}
+	return FutureDensities;
 }
 
 // 다음번에 loop가 돌때 Data를 받기 위해 설정
@@ -715,4 +1349,12 @@ void UAllStateWidgetBFL::RequestFutureGrpahData(int32 FutureTime, AUnrealClientC
 	PlayerCharacter->GetProtocolLibrary()->FutureTimeAlpha = FutureTime;
 	// 다음번 loop에서 미래값을 가져오라고 요청함
 
+}
+
+void UAllStateWidgetBFL::ResetGraphIndexs(AUnrealClientCharacter* PlayerCharacter)
+{
+	PlayerCharacter->GetProtocolLibrary()->LoopNowGraphCnt = 0;
+	PlayerCharacter->GetProtocolLibrary()->LoopBoxNowGraphCnt = 0;
+	PlayerCharacter->GetProtocolLibrary()->LoopFutureGraphCnt = 0;
+	PlayerCharacter->GetProtocolLibrary()->LoopBoxFutureGraphCnt = 0;
 }

@@ -236,6 +236,12 @@ void AUnrealClientCharacter::Tick(float DeltaTime)
 		IndexX = CenterIndexX;
 		IndexY = CenterIndexY;
 		IndexZ = CenterIndexZ;
+		//if (ProtocolLibraryInstance) // 포트 8081 LO 값 넣어주기
+		//{
+		//	ProtocolLibraryInstance->IndexX = (int64)IndexX;
+		//	ProtocolLibraryInstance->IndexY = (int64)IndexY;
+		//	ProtocolLibraryInstance->IndexZ = (int64)IndexZ;
+		//}
 	}
 
 

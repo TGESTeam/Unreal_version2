@@ -168,6 +168,11 @@ public:
 	// Response 응답값(미래)를 TArray에 저장
 	TMap<KindPV, TArray<float>> TransformFutureDataResponse8082;
 
+
+	int32 port8082X;
+	int32 port8082Y;
+	int32 port8082Z;
+
 private:
 
 

@@ -73,6 +73,10 @@ class UNREALCLIENT_API UAllStateWidgetBFL : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintCallable, Category = "RequestFutureGrpahData")
 	static void RequestFutureGrpahData(int32 FutureTime, AUnrealClientCharacter * PlayerCharacter);
 
+	// +
+	UFUNCTION(BlueprintCallable, Category = "Control Mouse")
+	static void ControlMouse(AUnrealClientCharacter* PlayerCharacter, bool bisVil);
+
 	/* --------------- [Port 8083] --------------- */
 	// Image 위젯의 색상을 변경하는 함수
 	UFUNCTION(BlueprintCallable, Category = "WidgetOperations")
@@ -97,6 +101,8 @@ class UNREALCLIENT_API UAllStateWidgetBFL : public UBlueprintFunctionLibrary
 
 	UFUNCTION(BlueprintCallable, Category = "WidgetOperations") // -10s 더하기
 		static void AddSecondsToCurrentTimemin(int32 Seconds);
+
+	
 
 private:
 	static double StartTime;

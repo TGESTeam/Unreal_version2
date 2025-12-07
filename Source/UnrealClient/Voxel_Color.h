@@ -37,14 +37,16 @@ public:
 	FGameplayTagContainer GameplayTags;
 
 	UMaterialInstanceDynamic* DynamicMaterial;
+
+
+	KindPV nowPV;
+
+	float density;
 private:
 	// Mesh component
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	UStaticMeshComponent* VoxelMesh;
 
-	KindPV nowPV;
-
-	float density;
 
 	// ----- ÇÔ¼ö ----
 protected:

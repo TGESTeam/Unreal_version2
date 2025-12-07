@@ -17,6 +17,9 @@
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
+TArray<float> AUnrealClientCharacter::CurrentLocationStatus;
+int32 AUnrealClientCharacter::futureTime;
+
 //////////////////////////////////////////////////////////////////////////
 // AUnrealClientCharacter
 
@@ -42,13 +45,13 @@ AUnrealClientCharacter::AUnrealClientCharacter()
 
 
 
-	NumX = 85;
+	NumX = 84;
 	NumY = 93;
 	NumZ = 101;
 
 	FVector Dimensions = FVector(1633.0f, 1809.0f, 2014.0f);
 	VoxelSize = FVector(Dimensions.X / NumX, Dimensions.Y / NumY, Dimensions.Z / NumZ); // 19.2117, 19.4516, 19.9405
-	
+
 }
 
 void AUnrealClientCharacter::BeginPlay()
@@ -85,12 +88,20 @@ void AUnrealClientCharacter::BeginPlay()
 		CenterIndexX = GridSizeX / 2;
 		CenterIndexY = GridSizeY / 2;
 	}
-	FVector StartLocation = CameraLocation
-		- FVector(CenterIndexX * VoxelSpacingX, CenterIndexY * VoxelSpacingY, 0.0f);  // X, Y 중앙 맞춤
+	//FVector StartLocation = CameraLocation - FVector(CenterIndexX * VoxelSpacingX, CenterIndexY * VoxelSpacingY, 0.0f);  // X, Y 중앙 맞춤
+	FVector StartLocation = FVector(-2370, -4390, -170);
 	StartLocation.Z = 0.0f;  // 땅 높이로 설정
 	
-	UE_LOG(LogTemp, Warning, TEXT("StartLocation : %f , %f, %f"), StartLocation.X, StartLocation.Y, StartLocation.Z);
+	//UE_LOG(LogTemp, Warning, TEXT("StartLocation : %f , %f, %f"), StartLocation.X, StartLocation.Y, StartLocation.Z);
+	//UE_LOG(LogTemp, Warning, TEXT("CameraLocation : %f , %f, %f"), CameraLocation.X, CameraLocation.Y, CameraLocation.Z);
 
+	////FVector s  = FMath::Abs(CameraLocation - FVector(2370, 4390, 170));
+	//FVector s;
+	//s.X = FMath::Abs(CameraLocation.X + 2370);
+	//s.Y = FMath::Abs(CameraLocation.Y + 4390);
+	//s.Z = FMath::Abs(CameraLocation.Z +  170);
+
+	//UE_LOG(LogTemp, Warning, TEXT("s : %f , %f, %f"), s.X/ VoxelSpacingX, s.Y/ VoxelSpacingY, s.Z/ VoxelSpacingZ);
 	// 복셀 생성 및 배열에 저장
 	for (int32 x = 0; x < GridSizeX; ++x)
 	{
@@ -123,6 +134,8 @@ void AUnrealClientCharacter::BeginPlay()
 	//Z축 설정
 	CenterIndexZ = FMath::FloorToInt((CameraLocation.Z - GridStartLocation.Z) / VoxelSpacingZ);
 
+	//CurrentLocationStatus.Reserve(KIND_PV_LENGTH);
+	CurrentLocationStatus.Init(0.0f, 7);
 }
 
 void AUnrealClientCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -184,7 +197,7 @@ void AUnrealClientCharacter::Tick(float DeltaTime)
 	int32 IndexX = FMath::FloorToInt((CameraLocation.X - GridStartLocation.X) / VoxelSpacingX);
 	int32 IndexY = FMath::FloorToInt((CameraLocation.Y - GridStartLocation.Y) / VoxelSpacingY);
 	int32 IndexZ = FMath::FloorToInt((CameraLocation.Z - GridStartLocation.Z) / VoxelSpacingZ);
-	//UE_LOG(LogTemplateCharacter, Log, TEXT("CenterIndexZ: %d, IndexZ : %d"), CenterIndexZ, IndexZ);
+	//UE_LOG(LogTemplateCharacter, Log, TEXT("IndexX: %d, IndexY : %d IndexZ : %d"), IndexX, IndexY, IndexZ);
 
 
 	// 현재 캐릭터의 Z축 위치 가져오기
@@ -226,7 +239,27 @@ void AUnrealClientCharacter::Tick(float DeltaTime)
 				}
 			}
 		}
+		FVector StartLocation = FVector(-2370, -4390, -170);
+		StartLocation.Z = 0.0f;  // 땅 높이로 설정
 
+		//UE_LOG(LogTemp, Warning, TEXT("StartLocation : %f , %f, %f"), StartLocation.X, StartLocation.Y, StartLocation.Z);
+		//UE_LOG(LogTemp, Warning, TEXT("CameraLocation : %f , %f, %f"), CameraLocation.X, CameraLocation.Y, CameraLocation.Z);
+
+		//FVector s  = FMath::Abs(CameraLocation - FVector(2370, 4390, 170));
+		FVector s;
+		s.X = FMath::Abs(CameraLocation.X + 2370);
+		s.Y = FMath::Abs(CameraLocation.Y + 4390);
+		s.Z = FMath::Abs(CameraLocation.Z + 170);
+		int32 X = FMath::RoundToInt(s.X / VoxelSpacingX);
+		int32 Y = FMath::RoundToInt(s.Y / VoxelSpacingY);
+		int32 Z = FMath::RoundToInt(s.Z / VoxelSpacingZ);
+		if (ProtocolLibraryInstance)
+		{
+			ProtocolLibraryInstance->port8082X = X;
+			ProtocolLibraryInstance->port8082Y = Y;
+			ProtocolLibraryInstance->port8082Z = Z;
+		}
+		//UE_LOG(LogTemp, Warning, TEXT("s : %d , %d, %d"), X, Y, Z);
 		// 플레이어가 다시 X, Y 중앙에 위치하도록 인덱스 조정
 		IndexX = CenterIndexX;
 		IndexY = CenterIndexY;
@@ -236,11 +269,47 @@ void AUnrealClientCharacter::Tick(float DeltaTime)
 
 	//UE_LOG(LogTemplateCharacter, Log, TEXT("Player is at X index: %d, Y index: %d"), IndexX, IndexY);
 
-	for (AVoxel_Color* s: SpawnedVoxels) {
-	   //s->SetColorWhiteToRed(persent);
-	   //s->DynamicMaterial->SetVectorParameterValue(FName("ColorParam"), FLinearColor::MakeRandomColor());
-	   s->DynamicMaterial->SetVectorParameterValue(FName("ColorParam"), FLinearColor(1.0f, 0.25f, 0.25f, 1.0f));
-	   s->DynamicMaterial->SetScalarParameterValue(FName("OpacityParam"), 0.01f);
+	//UE_LOG(LogTemplateCharacter, Log, TEXT("Player is at X index: %d, Y index: %d"), IndexX, IndexY);
+	// 포인터를 사용하여 현재 값을 추적
+	int32 valueIndex = 0;
+	// SpawnedVoxels의 각 class별로 density가 있고, 모든 class의 nowpPV는 동일하고
+	for (AVoxel_Color* s : SpawnedVoxels)
+	{
+		s->nowPV = (KindPV)ProtocolLibraryInstance->SelectedValue;
+		//UE_LOG(LogTemp, Log, TEXT("----------------------> SetNowData Opened!!! [%d] -----"), (int32)ProtocolLibraryInstance->SelectedValue);
+		//if (!ProtocolLibraryInstance->port8081ResponseAnswer.IsEmpty())
+		//{
+		//	// 배열의 값이 여전히 남아 있는지 확인
+		//	if (valueIndex < ProtocolLibraryInstance->port8081ResponseAnswer.Num())
+		//	{
+		//		// 배열에서 값을 가져와 Voxel의 Density에 할당 (예를 들어 Density가 double 속성일 경우)
+		//		s->density = ProtocolLibraryInstance->port8081ResponseAnswer[valueIndex];
+
+		//		// 다음 값으로 이동
+		//		valueIndex++;
+		//	}
+		//	else
+		//	{
+		//		// 배열의 값이 모두 소진되면 필요한 조치
+
+		//	}
+		if (!ProtocolLibraryInstance->port8081ResponseAnswer.IsEmpty())
+		{
+			s->density = ProtocolLibraryInstance->port8081ResponseAnswer[valueIndex];
+			valueIndex++;
+			s->ChangeColor();
+		}
+		else
+		{
+			s->DynamicMaterial->SetVectorParameterValue(FName("ColorParam"), FLinearColor(1.0f, 0.25f, 0.25f, 1.0f));
+			s->DynamicMaterial->SetScalarParameterValue(FName("OpacityParam"), 0.01f);
+		}
+		;
+		//}
+		// 
+		//s->DynamicMaterial->SetVectorParameterValue(FName("ColorParam"), FLinearColor::MakeRandomColor());
+		//s->DynamicMaterial->SetVectorParameterValue(FName("ColorParam"), FLinearColor(1.0f, 0.25f, 0.25f, 1.0f));
+		//s->DynamicMaterial->SetScalarParameterValue(FName("OpacityParam"), 0.01f);
 	}
 
 

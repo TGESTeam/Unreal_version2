@@ -27,6 +27,13 @@ AProtocolLibrary::AProtocolLibrary()
 	Port8082 = 8082;
 	Port8083 = 8083;
 
+	Port8081_request.Init(false, 7); // 7개의 false 값으로 배열 초기화
+	this->SelectedValue = Port8081_request.Num();
+	Port8083_request.Init(false, 3);
+	Port8082_request.Init(false, 7);
+
+	UpdateCounter = 0;
+	//AnswerSizeReachedEvent = FPlatformProcess::CreateSynchEvent(false); // 자동 리셋 이벤트 생성
 }
 
 // 싱글톤 인스턴스를 반환하는 함수
@@ -52,7 +59,11 @@ void AProtocolLibrary::DestroyInstance()
 AProtocolLibrary::~AProtocolLibrary()
 {
 
-
+	//if (AnswerSizeReachedEvent)
+	//{
+	//	FPlatformProcess::ReturnSynchEventToPool(AnswerSizeReachedEvent);
+	//	AnswerSizeReachedEvent = nullptr;
+	//}
 }
 
 // Called when the game starts or when spawned
@@ -115,7 +126,7 @@ void AProtocolLibrary::Tick(float DeltaTime)
 	TimeSinceLastSend += DeltaTime;
 
 	// 2초마다 메시지 전송
-	if (TimeSinceLastSend >= 2.0f)
+	if (TimeSinceLastSend >= 0.5f)
 	{
 		//SendMessageToServer(Socket8081, TEXT("Message to Server 1"));
 		//SendMessageToServer(Socket8082, TEXT("Message to Server 2"));
@@ -151,6 +162,377 @@ void AProtocolLibrary::ConnectToServer(FSocket*& Socket, const FString& ServerAd
 	}
 }
 
+void AProtocolLibrary::setPort8081_requestPV(int32 index, KindPV seletedPV) {
+
+	Port8081_request[index] = true;
+	this->SelectedValue = (int32)seletedPV;
+	//UE_LOG(LogTemp, Log, TEXT("----------------------> setPort8081_requestPV  [%d]"), index);
+}
+
+void AProtocolLibrary::setPort8081_requestPVAllFalse() {
+	Port8081_request.Init(false, 7);
+}
+
+void AProtocolLibrary::ParshingResponsePort8081(FString& ReceivedMessage)
+{	// "PV" 제거
+	ReceivedMessage.RemoveFromStart(TEXT("PV"));
+
+	TArray<FString> stringArray;
+	ReceivedMessage.ParseIntoArray(stringArray, TEXT(","), true);
+
+	if (port8081ResponseAnswer.Num() > 0) // 배열에 요소가 있는지 확인
+	{
+		port8081ResponseAnswer.Empty(); // 모든 요소 삭제
+	}
+	for (const FString& str : stringArray)
+	{
+		double value = FCString::Atod(*str);
+		this->port8081ResponseAnswer.Add(value);
+	}
+}
+
+void AProtocolLibrary::ParshingResponsePort8083(FString& ReceivedMessage)
+{
+	//UE_LOG(LogTemp, Log, TEXT("DEBUG : ParshingResponsePort8083"));
+
+	TArray<FString> stringArray;
+	ReceivedMessage.ParseIntoArray(stringArray, TEXT(","), true);
+
+	{
+		FScopeLock Lock(&Mutex); // port8083ResponseAnswer에 접근하기 전에 락을 사용합니다.
+
+		// 받은 메시지를 처리하여 배열에 추가
+		for (const FString& str : stringArray)
+		{
+			double value = FCString::Atod(*str);
+			this->port8083ResponseAnswer.Add(value);
+		}
+	}
+
+	bool bInitialized = false;
+
+	{
+		FScopeLock Lock(&Mutex); // port8083Answer에 접근하기 전 락을 사용합니다.
+
+		// 배열 크기를 확인하여 안전하게 접근
+		if (this->port8083ResponseAnswer.Num() >= 10000 && this->port8083Answer.IsEmpty() && CompletedIterations == 0)
+		{
+			// port8083ResponseAnswer에서 처음 10,000개의 값을 port8083Answer로 복사
+			for (int32 i = 0; i < 10000; ++i)
+			{
+				if (this->port8083ResponseAnswer.IsValidIndex(i)) // 인덱스 유효성 검사
+				{
+					this->port8083Answer.Add(this->port8083ResponseAnswer[i]);
+				}
+			}
+
+			// port8083ResponseAnswer 배열에서 복사한 값을 제거
+			this->port8083ResponseAnswer.RemoveAt(0, 10000, false);
+			bInitialized = true;
+		}
+	}
+
+	if (bInitialized)
+	{
+		AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [this]()
+		{
+			//UE_LOG(LogTemp, Log, TEXT("DEBUG : MonitorPort8083Answer Task Triggered"));
+		});
+	}
+}
+
+//void AProtocolLibrary::ParshingResponsePort8083(FString& ReceivedMessage)
+//{
+//	UE_LOG(LogTemp, Log, TEXT("DEBUG : ParshingResponsePort8083"));
+//
+//	TArray<FString> stringArray;
+//	ReceivedMessage.ParseIntoArray(stringArray, TEXT(","), true);
+//
+//	// 잠금을 통해 배열에 안전하게 접근합니다.
+//	{
+//		FScopeLock Lock(&Mutex);
+//		for (const FString& str : stringArray)
+//		{
+//			double value = FCString::Atod(*str);
+//			this->port8083ResponseAnswer.Add(value);
+//		}
+//	}
+//
+//	// 초기화 플래그 설정
+//	bool bInitialized = false;
+//
+//	//{
+//		//FScopeLock Lock(&Mutex); // port8083Answer 초기화 중에 락 사용
+//		if (this->port8083Answer.IsEmpty() || CompletedIterations == 0)
+//		{
+//			// port8083ResponseAnswer에서 처음 10,000개의 값을 port8083Answer로 복사
+//			for (int32 i = 0; i < 10000; ++i)
+//			{
+//				this->port8083Answer.Add(this->port8083ResponseAnswer[i]);
+//			}
+//			this->port8083ResponseAnswer.RemoveAt(0, 10000, false);
+//			bInitialized = true; 
+//		}
+//	//}
+//
+//	if (bInitialized)
+//	{
+//		AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [this]()
+//		{
+//			UE_LOG(LogTemp, Log, TEXT("DEBUG : MonitorPort8083Answer Task Triggered"));
+//		});
+//	}
+//}
+
+
+
+
+
+// ---- 최종 --- 
+//void AProtocolLibrary::ParshingResponsePort8083(FString& ReceivedMessage)
+//{
+//	UE_LOG(LogTemp, Log, TEXT("DEBUG : ParshingResponsePort8083"));
+//
+//	TArray<FString> stringArray;
+//	ReceivedMessage.ParseIntoArray(stringArray, TEXT(","), true);
+//
+//	for (const FString& str : stringArray)
+//	{
+//		double value = FCString::Atod(*str);
+//
+//		{
+//			FScopeLock Lock(&Mutex); // 모든 자원 접근을 보호하기 위해 추가
+//			this->port8083ResponseAnswer.Add(value);
+//		}
+//	}
+//
+//	//UE_LOG(LogTemp, Log, TEXT("DEBUG : ParshingResponsePort8083-2"));
+//
+//	if (this->port8083Answer.IsEmpty() && shouldTriggerEvent == true)
+//	{
+//		{
+//			//UE_LOG(LogTemp, Log, TEXT("DEBUG : ParshingResponsePort8083-3"));
+//			FScopeLock Lock2(&Mutex); // port8083Answer 초기화 중에 락 사용
+//			for (int32 i = 0; i < 10000; ++i)
+//			{
+//				this->port8083Answer.Add(this->port8083ResponseAnswer[i]);
+//				//UE_LOG(LogTemp, Log, TEXT("DEBUG : ParshingResponsePort8083-4"));
+//			}
+//			this->port8083ResponseAnswer.RemoveAt(0, 10000, false);
+//			//UE_LOG(LogTemp, Log, TEXT("DEBUG : ParshingResponsePort8083-5"));
+//		}
+//	}
+//}
+
+
+
+// 이거 아님
+//void AProtocolLibrary::ParshingResponsePort8083(FString& ReceivedMessage)
+//{	
+//	{
+//		// 뮤텍스를 사용하여 자원 보호
+//		FScopeLock Lock(&Mutex); // 뮤텍스를 잠금
+//		UE_LOG(LogTemp, Log, TEXT("DEBUG : ParshingResponsePort8083"));
+//
+//		//LogTemp: NewColor: R = 1.000000, G = 0.000000, B = 0.000000, A = 1.000000
+//		TArray<FString> stringArray;
+//		TArray<double> temp;
+//		ReceivedMessage.ParseIntoArray(stringArray, TEXT(","), true);
+//
+//		//if (port8083ResponseAnswer.Num() > 0) // 배열에 요소가 있는지 확인
+//		//{
+//		//	port8083ResponseAnswer.Empty(); // 모든 요소 삭제
+//		//}
+//		for (const FString& str : stringArray)
+//		{
+//			double value = FCString::Atod(*str);
+//			//temp.Add(value);
+//			this->port8083ResponseAnswer.Add(value);
+//			//UE_LOG(LogTemp, Log, TEXT("port8083ResponseAnswer %lf"), value);
+//		}
+//		//this->port8083ResponseAnswer = temp;
+//		if (this->port8083ResponseAnswer.Num() > 10000)
+//		{
+//			FScopeLock Lock2(&Mutex); // port8083Answer 초기화 중에 락 사용
+//
+//			// 처음 10,000개의 요소를 port8083Answer에 추가
+//			for (int32 i = 0; i < 10000; ++i)
+//			{
+//				this->port8083Answer.Add(this->port8083ResponseAnswer[i]);
+//			}
+//
+//			// port8083ResponseAnswer에서 처음 10,000개의 요소를 제거
+//			this->port8083ResponseAnswer.RemoveAt(0, 10000, false);
+//
+//			//UE_LOG(LogTemp, Log, TEXT("Added 10,000 elements to port8083Answer and removed them from port8083ResponseAnswer"));
+//		}
+//
+//		
+//
+//		//if (this->CompletedIterations == 0)
+//		//{
+//		//	FScopeLock Lock2(&Mutex); // port8083Answer 초기화 중에 락 사용
+//		//	//this->port8083Answer = this->port8083ResponseAnswer;
+//		//			// port8083ResponseAnswer의 각 요소를 port8083Answer에 추가
+//		//	for (double value : this->port8083ResponseAnswer)
+//		//	{
+//		//		this->port8083Answer.Add(value);
+//		//	}
+//		//}
+//
+//		// port8083Answer와 port8083ResponseAnswer의 길이를 로그로 출력
+//		//UE_LOG(LogTemp, Log, TEXT("Length of port8083Answer: %d"), port8083Answer.Num());
+//		//UE_LOG(LogTemp, Log, TEXT("Length of port8083ResponseAnswer: %d"), port8083ResponseAnswer.Num());
+//
+//		//// 호출 카운터 증가
+//		//UpdateCounter++;
+//
+//		//// 7초마다 port8083Answer 값을 업데이트 (1초마다 호출되므로 7회마다 실행)
+//		//if (UpdateCounter >= 5)
+//		//{
+//		//	if (port8083Answer != port8083ResponseAnswer) // 값이 변경된 경우에만 업데이트
+//		//	{
+//		//		port8083Answer = port8083ResponseAnswer;
+//		//		// 로그로 업데이트 확인
+//		//		//UE_LOG(LogTemp, Log, TEXT("port8083Answer updated every 7 seconds: %s"), *FString::JoinBy(port8083Answer, TEXT(", "), [](double val) { return FString::SanitizeFloat(val); }));
+//
+//		//		// UI 업데이트를 위해서 색상 변경 플래그를 세팅합니다.
+//
+//		//	}
+//
+//		//	UpdateCounter = 0; // 카운터 초기화
+//		//}
+//
+//	}
+//	//this->port8083Answer = this->port8083ResponseAnswer;
+//}
+
+FLinearColor AProtocolLibrary::GetLienarColor(double& density, int32 selectedPVIndex)
+{
+	double densityPercent;
+
+	// PV의 범위에 따른 dencity인지 검증
+	//if ((DENSITY_MIN[nowPV] > density) || (DENSITY_MAX[nowPV] < density)) {
+	//    UE_LOG(LogTemp, Warning, TEXT("Inputed invalid density's value!!"));
+	//    return;
+	//}
+	// 표현될 색의 범위를 정한다. (|a| 는 절댓값을 의미한다.) 
+	// (density - 최소) / (최대 - 최소) * 100 = (범위에 대한 %) 
+	// Color의
+	densityPercent = (density - AVoxel_Color::DENSITY_MIN[selectedPVIndex]) / (AVoxel_Color::DENSITY_MAX[selectedPVIndex] - AVoxel_Color::DENSITY_MIN[selectedPVIndex]) * 100;
+
+	// PV에 따른 색상 color 색깔 범위 설정
+	switch ((KindPV)selectedPVIndex) {
+	case O2:
+		return SetColorWhiteToRedCrossSection(densityPercent, true); // Red ~ White
+		break;
+
+	case CO2:
+		return SetColorWhiteToRedCrossSection(densityPercent); // White ~ Red
+		break;
+
+	case CO:
+		return SetColorWhiteToRedCrossSection(densityPercent); // White ~ Red
+		break;
+
+	case TEMP:
+		return SetColorBlueToRedCrossSection(densityPercent, true); // Red ~ Blue
+		break;
+
+	case VELOCITY:
+		return SetColorBlueToRedCrossSection(densityPercent); // Blue ~ Red
+		break;
+
+	case ACCEL:
+		return SetColorBlueToRedCrossSection(densityPercent); // Blue ~ Red
+		break;
+
+	case FUEL:
+		return SetColorWhiteToBlackCrossSection(densityPercent); // White ~ Black
+		break;
+	default:
+		// 투명색 설정
+		// 4번째 param을 0.0f로 해야함
+		return FLinearColor(1.0f, 0.25f, 0.25f, 0.2f);
+		break;
+	}
+
+	return FLinearColor();
+}
+
+FLinearColor AProtocolLibrary::SetColorWhiteToRedCrossSection(double& density, bool reverse)
+{
+	if (reverse) { // Red ~ White
+		density = (1.0f - density);
+	}
+
+	return FLinearColor(1.0f, density, density, 1.0f);
+}
+
+FLinearColor AProtocolLibrary::SetColorBlueToRedCrossSection(double& density, bool reverse)
+{
+	if (reverse) {
+		density = (1.0f - density); // densityPersent는 오직 0~1 사이 이므로 음수 판별x
+	}
+
+
+	if (density >= 0.0f && density <= 0.25f) { // R증가, B감소
+		return FLinearColor((density / 2), 0.0f, (1.0f - (density / 2)), 1.0f);
+	}
+	else if ((density > 0.25f && density <= 0.4f)) { // R 2배증가, B 2배감소 (보라색을 나타내지 않기 위해)
+		return FLinearColor((density * 2), 0.0f, ((1.0f - density) * 2), 1.0f);
+	}
+	else if (density > 0.4f) { // 위의 상태를 천천히 유지시킴
+		return FLinearColor(density, 0.0f, (1.0f - density), 1.0f);
+	}
+
+	return FLinearColor();
+}
+
+FLinearColor AProtocolLibrary::SetColorWhiteToBlackCrossSection(double& density, bool reverse)
+{
+	if (reverse) {
+		density = (1.0f - density);
+	}
+
+	return FLinearColor((1.0f - density), (1.0f - density), (1.0f - density), 1.0f);
+}
+
+void AProtocolLibrary::setPort8082_request(int32 index, KindPV seletedPV) {
+
+	if (Port8082_request[index] == true)
+	{
+		Port8082_request[index] = false;
+	}
+	else
+	{
+		Port8082_request[index] = true;
+	}
+	//UE_LOG(LogTemp, Log, TEXT("----------------------> setPort8082_request  [%d]"), index);
+}
+
+void AProtocolLibrary::setPort8083_request(int32 index, FloorPlanPV seletedPV) {
+
+	if (Port8083_request[index] == true)
+	{
+		Port8083_request[index] = false;
+	}
+	else
+	{
+		Port8083_request[index] = true;
+	}
+	//UE_LOG(LogTemp, Log, TEXT("----------------------> setPort8083_request  [%d]"), index);
+}
+
+void AProtocolLibrary::setPort8083_requestPVAllFalse() {
+
+	Port8083_request.Init(false, 3);
+	//UE_LOG(LogTemp, Log, TEXT("----------------------> setPort8083_request  [%d]"), index);
+}
+
+//void AProtocolLibrary::setPort8081_requestPVAllFalse() {
+//	Port8081_request.Init(false, 7);
+//}
 
 void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 {
@@ -163,30 +545,41 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 			Message += "KI";
 
 			//UE_LOG(LogTemp, Log, TEXT("CO2 Value: %s"), port8081Request.CO2 ? TEXT("true") : TEXT("false"));
-			for (size_t i = 0; i < 7; i++)
+			FString ValueToAdd;
+			for (size_t i = 0; i < Port8081_request.Num(); i++)
 			{
-				FString ValueToAdd = TEXT("0");
-
-				// port8081Request의 각 멤버를 순차적으로 검사
-				switch (i)
-				{
-					case 0: ValueToAdd = port8081Request.CO2 ? TEXT("1") : TEXT("0"); break;
-					case 1: ValueToAdd = port8081Request.O2 ? TEXT("1") : TEXT("0"); break;
-					case 2: ValueToAdd = port8081Request.CO ? TEXT("1") : TEXT("0"); break;
-					case 3: ValueToAdd = port8081Request.TEMP ? TEXT("1") : TEXT("0"); break;
-					case 4: ValueToAdd = port8081Request.VELOCITY ? TEXT("1") : TEXT("0"); break;
-					case 5: ValueToAdd = port8081Request.ACCEL ? TEXT("1") : TEXT("0"); break;
-					case 6: ValueToAdd = port8081Request.FUEL ? TEXT("1") : TEXT("0"); break;
-					default: break;
-				}
+				ValueToAdd = Port8081_request[i] ? TEXT("1") : TEXT("0");
 				Message += ValueToAdd;
 			}
 
+			//for (size_t i = 0; i < 7; i++)
+			//{
+			//	FString ValueToAdd = TEXT("0");
+
+			//	// port8081Request의 각 멤버를 순차적으로 검사
+			//	switch (i)
+			//	{
+			//		case 0: ValueToAdd = port8081Request.CO2 ? TEXT("1") : TEXT("0"); break;
+			//		case 1: ValueToAdd = port8081Request.O2 ? TEXT("1") : TEXT("0"); break;
+			//		case 2: ValueToAdd = port8081Request.CO ? TEXT("1") : TEXT("0"); break;
+			//		case 3: ValueToAdd = port8081Request.TEMP ? TEXT("1") : TEXT("0"); break;
+			//		case 4: ValueToAdd = port8081Request.VELOCITY ? TEXT("1") : TEXT("0"); break;
+			//		case 5: ValueToAdd = port8081Request.ACCEL ? TEXT("1") : TEXT("0"); break;
+			//		case 6: ValueToAdd = port8081Request.FUEL ? TEXT("1") : TEXT("0"); break;
+			//		default: break;
+			//	}
+			//	Message += ValueToAdd;
+			//}
+
 			//LO
 			Message += "LO";
-			Message += FString::Printf(TEXT("%lf"), PlayerLocation.X) + "," \
-				+ FString::Printf(TEXT("%lf"), PlayerLocation.Y) + "," \
-				+ FString::Printf(TEXT("%lf"), PlayerLocation.Z);
+			//Message += FString::Printf(TEXT("%lf"), PlayerLocation.X) + "," \
+			//	+ FString::Printf(TEXT("%lf"), PlayerLocation.Y) + "," \
+			//	+ FString::Printf(TEXT("%lf"), PlayerLocation.Z);
+			Message += FString::Printf(TEXT("%d"),port8082X) + "," \
+				+ FString::Printf(TEXT("%d"), port8082Y) + "," \
+				+ FString::Printf(TEXT("%d"), port8082Z);
+			
 			//TI
 			Message += "TI";
 			FTimespan NewTime = CurrentTime + FTimespan::FromSeconds(0.1);
@@ -201,36 +594,52 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 			int32 Size = FCString::Strlen(SerializedChar) + 1;
 			int32 Sent = 0;
 
-			UE_LOG(LogTemp, Log, TEXT("Message Status: %s"), *Message);
+			//UE_LOG(LogTemp, Log, TEXT("Message Status: %s"), *Message);
 			Socket->Send((uint8*)TCHAR_TO_UTF8(SerializedChar), Size, Sent);
 
 			// 수신된 데이터의 크기에 맞춰 문자열 변환
 			FString ReceivedMessage = ReceiveData(Socket);
-			UE_LOG(LogTemp, Log, TEXT("Received from server: %s"), *ReceivedMessage);
+			//UE_LOG(LogTemp, Log, TEXT("Port 8081 Received from server: %s"), *ReceivedMessage);
+
+			if (ReceivedMessage.Contains(TEXT("None"))) // None일 때
+			{
+				if (!port8081ResponseAnswer.IsEmpty())
+					port8081ResponseAnswer.Empty();
+			}
+			else //PV값이 있을 때
+			{
+				ParshingResponsePort8081(ReceivedMessage);
+			}
 		}
 		else if (Port == 8082)
 		{
 			FString Message; // 	 = TEXT("Message to Server 2");
 			//KI
 			Message += "KI";
-			for (size_t i = 0; i < 7; i++) // 중복 가능
+			FString ValueToAdd;
+			for (size_t i = 0; i < Port8082_request.Num(); i++)
 			{
-				FString ValueToAdd = TEXT("0");
-
-				// port8081Request의 각 멤버를 순차적으로 검사
-				switch (i)
-				{
-					case 0: ValueToAdd = port8082Request.CO2 ? TEXT("1") : TEXT("0"); break;
-					case 1: ValueToAdd = port8082Request.O2 ? TEXT("1") : TEXT("0"); break;
-					case 2: ValueToAdd = port8082Request.CO ? TEXT("1") : TEXT("0"); break;
-					case 3: ValueToAdd = port8082Request.TEMP ? TEXT("1") : TEXT("0"); break;
-					case 4: ValueToAdd = port8082Request.VELOCITY ? TEXT("1") : TEXT("0"); break;
-					case 5: ValueToAdd = port8082Request.ACCEL ? TEXT("1") : TEXT("0"); break;
-					case 6: ValueToAdd = port8082Request.FUEL ? TEXT("1") : TEXT("0"); break;
-					default: break;
-				}
+				ValueToAdd = Port8082_request[i] ? TEXT("1") : TEXT("0");
 				Message += ValueToAdd;
 			}
+			//for (size_t i = 0; i < 7; i++) // 중복 가능
+			//{
+			//	FString ValueToAdd = TEXT("0");
+
+			//	// port8081Request의 각 멤버를 순차적으로 검사
+			//	switch (i)
+			//	{
+			//		case 0: ValueToAdd = port8082Request.CO2 ? TEXT("1") : TEXT("0"); break;
+			//		case 1: ValueToAdd = port8082Request.O2 ? TEXT("1") : TEXT("0"); break;
+			//		case 2: ValueToAdd = port8082Request.CO ? TEXT("1") : TEXT("0"); break;
+			//		case 3: ValueToAdd = port8082Request.TEMP ? TEXT("1") : TEXT("0"); break;
+			//		case 4: ValueToAdd = port8082Request.VELOCITY ? TEXT("1") : TEXT("0"); break;
+			//		case 5: ValueToAdd = port8082Request.ACCEL ? TEXT("1") : TEXT("0"); break;
+			//		case 6: ValueToAdd = port8082Request.FUEL ? TEXT("1") : TEXT("0"); break;
+			//		default: break;
+			//	}
+			//	Message += ValueToAdd;
+			//}
 
 
 			//LO
@@ -262,31 +671,37 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 
 			// 수신된 데이터의 크기에 맞춰 문자열 변환
 			FString ReceivedMessage = ReceiveData(Socket);
-			UE_LOG(LogTemp, Log, TEXT("Received from server: %s"), *ReceivedMessage);
+			//UE_LOG(LogTemp, Log, TEXT("Port 8082 Received from server: %s"), *ReceivedMessage);
 		}
 		else if (Port == 8083)
 		{
 			FString Message; // 	 = TEXT("Message to Server 2");
 			//KI
 			Message += "KI";
-			for (size_t i = 0; i < 7; i++)
+			FString ValueToAddKI;
+			for (size_t i = 0; i < Port8081_request.Num(); i++)
 			{
-				FString ValueToAdd = TEXT("0");
-
-				// port8081Request의 각 멤버를 순차적으로 검사
-				switch (i)
-				{
-					case 0: ValueToAdd = port8081Request.CO2 ? TEXT("1") : TEXT("0"); break;
-					case 1: ValueToAdd = port8081Request.O2 ? TEXT("1") : TEXT("0"); break;
-					case 2: ValueToAdd = port8081Request.CO ? TEXT("1") : TEXT("0"); break;
-					case 3: ValueToAdd = port8081Request.TEMP ? TEXT("1") : TEXT("0"); break;
-					case 4: ValueToAdd = port8081Request.VELOCITY ? TEXT("1") : TEXT("0"); break;
-					case 5: ValueToAdd = port8081Request.ACCEL ? TEXT("1") : TEXT("0"); break;
-					case 6: ValueToAdd = port8081Request.FUEL ? TEXT("1") : TEXT("0"); break;
-					default: break;
-				}
-				Message += ValueToAdd;
+				ValueToAddKI = Port8081_request[i] ? TEXT("1") : TEXT("0");
+				Message += ValueToAddKI;
 			}
+			//for (size_t i = 0; i < 7; i++)
+			//{
+			//	FString ValueToAdd = TEXT("0");
+
+			//	// port8081Request의 각 멤버를 순차적으로 검사
+			//	switch (i)
+			//	{
+			//		case 0: ValueToAdd = port8081Request.CO2 ? TEXT("1") : TEXT("0"); break;
+			//		case 1: ValueToAdd = port8081Request.O2 ? TEXT("1") : TEXT("0"); break;
+			//		case 2: ValueToAdd = port8081Request.CO ? TEXT("1") : TEXT("0"); break;
+			//		case 3: ValueToAdd = port8081Request.TEMP ? TEXT("1") : TEXT("0"); break;
+			//		case 4: ValueToAdd = port8081Request.VELOCITY ? TEXT("1") : TEXT("0"); break;
+			//		case 5: ValueToAdd = port8081Request.ACCEL ? TEXT("1") : TEXT("0"); break;
+			//		case 6: ValueToAdd = port8081Request.FUEL ? TEXT("1") : TEXT("0"); break;
+			//		default: break;
+			//	}
+			//	Message += ValueToAdd;
+			//}
 
 			//TN
 			Message += "TN";
@@ -299,32 +714,50 @@ void AProtocolLibrary::SendMessageToServer(FSocket* Socket, int32 Port)
 
 			//AX 
 			Message += "AX";
-			for (size_t i = 0; i < 3; i++)
+			for (size_t i = 0; i < this->Port8083_request.Num(); i++)
 			{
 				FString ValueToAdd = TEXT("0");
-
-				// port8081Request의 각 멤버를 순차적으로 검사
-				switch (i)
-				{
-				case 0: ValueToAdd = port8083Request.X ? TEXT("1") : TEXT("0"); break;
-				case 1: ValueToAdd = port8083Request.Y ? TEXT("1") : TEXT("0"); break;
-				case 2: ValueToAdd = port8083Request.Z ? TEXT("1") : TEXT("0"); break;
-				default: break;
-				}
+				ValueToAdd = Port8083_request[i] ? TEXT("1") : TEXT("0");
 				Message += ValueToAdd;
 			}
+			//for (size_t i = 0; i < 3; i++)
+			//{
+			//	FString ValueToAdd = TEXT("0");
+
+			//	// port8081Request의 각 멤버를 순차적으로 검사
+			//	switch (i)
+			//	{
+			//	case 0: ValueToAdd = port8083Request.X ? TEXT("1") : TEXT("0"); break;
+			//	case 1: ValueToAdd = port8083Request.Y ? TEXT("1") : TEXT("0"); break;
+			//	case 2: ValueToAdd = port8083Request.Z ? TEXT("1") : TEXT("0"); break;
+			//	default: break;
+			//	}
+			//	Message += ValueToAdd;
+			//}
 
 			const TCHAR* SerializedChar = *Message;
 			int32 Size = FCString::Strlen(SerializedChar) + 1;
 			int32 Sent = 0;
-
+			//UE_LOG(LogTemp, Log, TEXT("Port 8082 Send from server: %s"), *Message);
 			Socket->Send((uint8*)TCHAR_TO_UTF8(SerializedChar), Size, Sent);
 
 			// 수신된 데이터의 크기에 맞춰 문자열 변환
 			FString ReceivedMessage = ReceiveData(Socket);
-			UE_LOG(LogTemp, Log, TEXT("Received from server: %s"), *ReceivedMessage);
-		}
+			//UE_LOG(LogTemp, Log, TEXT("Port 8083 Received from server: %s"), *ReceivedMessage);
 
+
+			if (ReceivedMessage.Contains(TEXT("Invalid request"))) // None일 때
+			{
+				if (!port8083ResponseAnswer.IsEmpty())
+					port8083ResponseAnswer.Empty();
+			}
+			else 
+			{
+				ParshingResponsePort8083(ReceivedMessage);
+			}
+
+
+		}
 	}
 	else
 	{
